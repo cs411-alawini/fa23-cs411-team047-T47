@@ -1,4 +1,4 @@
-# team047-sample
+# Team047-T47
 
 ## Basic Information
 
@@ -6,7 +6,7 @@
 | ----------- | ---------------------- |
 | TeamID      |        Team-047        |
 | TeamName    |            T47         |
-| Captain     |       Vira Kasprovs    |
+| Captain     |       Vira Kasprova    |
 | Captain     |  vkaspr2@illinois.edu  |
 | Member1     |        Wei Wu          |
 | Member1     |   weiwu6@illinois.edu  |
