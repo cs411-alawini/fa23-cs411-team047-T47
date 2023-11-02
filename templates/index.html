@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Schedule App with Map</title>
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+            margin-top: 20px;
+        }
+    </style>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBS-S37L58YssF52HQocELjBEI4s1-NSiM&callback=initMap"></script>
+    <script>
+        let map;
+
+        function initMap() {
+            const saoPaulo = { lat: -23.550520, lng: -46.633308 }; // São Paulo's coordinates
+
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: saoPaulo,
+                zoom: 12
+            });
+        }
+
+                // Sample bus stops data
+        const busStops = [
+            { lat: -23.556520, lng: -46.643308, name: "Stop A" },
+            { lat: -23.558520, lng: -46.648308, name: "Stop B" },
+            { lat: -23.554520, lng: -46.640308, name: "Stop C" },
+            // ... Add more bus stop coordinates and names as required
+        ];
+
+        function placeMarkers() {
+            for (let stop of busStops) {
+                const marker = new google.maps.Marker({
+                    position: stop,
+                    map: map,
+                    title: stop.name,
+                    // Customize the marker icon if needed
+                    // icon: 'path_to_custom_icon.png'
+                });
+                
+                // If you want to show some information when the marker is clicked:
+                const infoWindow = new google.maps.InfoWindow({
+                    content: `<h3>${stop.name}</h3><p>Some additional information about this stop if needed.</p>`
+                });
+
+                marker.addListener('click', function() {
+                    infoWindow.open(map, marker);
+                });
+            }
+        }
+
+        function initMap() {
+            const saoPaulo = { lat: -23.550520, lng: -46.633308 }; // São Paulo's coordinates
+
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: saoPaulo,
+                zoom: 12
+            });
+
+            placeMarkers();  // Place the bus stop markers on the map
+        }
+
+    </script>
+</head>
+<body>
+    <h1>Bus Schedule App with Map</h1>
+    <div id="map"></div>
+</body>
+</html>
