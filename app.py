@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 import requests
 
@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 # Assuming you have set up Cloud SQL with a public IP and have whitelisted your server's IP to access it.
 # Replace the placeholders with your actual credentials.
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://<username>:<password>@<host>/<database>'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:cs411t47db@34.28.132.25/cs411'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -53,6 +53,24 @@ def geocode_address():
         'latitude': latitude,
         'longitude': longitude
     })
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+
+# testing database connection
+@app.route('/test_db')
+def test_db():
+    try:
+        # Try fetching the first record from the BusStop table
+        bus_stop = BusStop.query.first()
+        if bus_stop:
+            return jsonify({'message': f"Connected! First bus stop is: {bus_stop.stop_name}"})
+        else:
+            return jsonify({'message': "Connected! But no data in the bus_stops table."})
+    except Exception as e:
+        return jsonify({'error': f"Database connection failed: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
