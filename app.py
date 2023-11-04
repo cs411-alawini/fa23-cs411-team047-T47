@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 import requests
+import mysql.connector
 
 app = Flask(__name__)
 
@@ -12,7 +13,7 @@ db = SQLAlchemy(app)
 
 # Database model for stops
 class BusStop(db.Model):
-    __tablename__ = 'bus_stops'  # Ensure this matches your actual table name in MySQL
+    __tablename__ = 'Bus_stops'  # Ensure this matches your actual table name in MySQL
     stop_id = db.Column(db.Integer, primary_key=True)
     stop_name = db.Column(db.String(256), nullable=False)
     stop_desc = db.Column(db.String(256), nullable=True)
@@ -58,19 +59,67 @@ def geocode_address():
 def index():
     return render_template('index.html')
 
-
-# testing database connection
 @app.route('/test_db')
 def test_db():
     try:
-        # Try fetching the first record from the BusStop table
-        bus_stop = BusStop.query.first()
+        # Connect to the database using mysql.connector
+        db = mysql.connector.connect(user='root', password='cs411t47db',
+                                     host='34.28.132.25',
+                                     database='cs411')
+        mycursor = db.cursor(dictionary=True)  # Use dictionary=True to fetch results as dictionaries
+        mycursor.execute("SELECT stop_name, stop_lat, stop_lon \
+                            FROM Bus_stops \
+                            LIMIT 1")
+        
+        bus_stop = mycursor.fetchone()
         if bus_stop:
-            return jsonify({'message': f"Connected! First bus stop is: {bus_stop.stop_name}"})
+            return jsonify({'message': f"Connected! First bus stop is: {bus_stop['stop_name']} with Latitude: {bus_stop['stop_lat']} and Longitude: {bus_stop['stop_lon']}"})
         else:
             return jsonify({'message': "Connected! But no data in the bus_stops table."})
     except Exception as e:
-        return jsonify({'error': f"Database connection failed: {str(e)}"}), 500
+        return jsonify({'error': f"Database connection failed using mysql.connector: {str(e)}"}), 500
+
+
+@app.route('/get_bus_stops')
+def get_bus_stops():
+    try:
+        conn = mysql.connector.connect(user='root', password='cs411t47db', host='34.28.132.25', database='cs411')
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT stop_name, stop_lat, stop_lon FROM Bus_stops")
+        bus_stops = cursor.fetchall()
+        return jsonify(bus_stops)
+    except Exception as e:
+        return jsonify({'error': f"Failed to fetch bus stops: {str(e)}"}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route('/test_connector')
+def test_connector():
+    try:
+        db = mysql.connector.connect(user='root', password='cs411t47db',
+                                     host='34.28.132.25',
+                                     database='cs411')
+
+        mycursor = db.cursor()
+        mycursor.execute("SELECT * FROM Calendar")
+        myresult = mycursor.fetchall()
+        
+        # Convert the results into a list of dictionaries for JSON serialization
+        columns = mycursor.column_names
+        results = [dict(zip(columns, row)) for row in myresult]
+        
+        return jsonify(results)
+
+    except Exception as e:
+        return jsonify({'error': f"Database query failed using mysql.connector: {str(e)}"}), 500
+
+
+
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
