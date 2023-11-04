@@ -15,14 +15,6 @@
     <script>
         let map;
 
-        function initMap() {
-            const saoPaulo = { lat: -23.550520, lng: -46.633308 }; // São Paulo's coordinates
-
-            map = new google.maps.Map(document.getElementById("map"), {
-                center: saoPaulo,
-                zoom: 12
-            });
-        }
 
                 // Sample bus stops data
         const busStops = [
@@ -32,19 +24,16 @@
             // ... Add more bus stop coordinates and names as required
         ];
 
-        function placeMarkers() {
+        function placeMarkers(busStops) {
             for (let stop of busStops) {
                 const marker = new google.maps.Marker({
-                    position: stop,
+                    position: { lat: parseFloat(stop.stop_lat), lng: parseFloat(stop.stop_lon) },
                     map: map,
-                    title: stop.name,
-                    // Customize the marker icon if needed
-                    // icon: 'path_to_custom_icon.png'
+                    title: stop.stop_name
                 });
                 
-                // If you want to show some information when the marker is clicked:
                 const infoWindow = new google.maps.InfoWindow({
-                    content: `<h3>${stop.name}</h3><p>Some additional information about this stop if needed.</p>`
+                    content: `<h3>${stop.stop_name}</h3>`
                 });
 
                 marker.addListener('click', function() {
@@ -61,7 +50,12 @@
                 zoom: 12
             });
 
-            placeMarkers();  // Place the bus stop markers on the map
+            // Fetch bus stops data from the backend and place markers
+            fetch('/get_bus_stops')
+            .then(response => response.json())
+            .then(data => {
+                placeMarkers(data);
+            });
         }
 
     </script>
