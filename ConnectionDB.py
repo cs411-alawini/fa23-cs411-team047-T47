@@ -14,8 +14,12 @@ def getCloseByStops(lat, lon):
   for result in mycursor.stored_results():
     details = result.fetchall()
 
-  for det in details:
-    print(det)
+  # for det in details:
+  #   print(det)
+
+  return details
+  mycursor.close()
+  db.close()
 
 def getCloseByRoutes(lat, lon):
   db = mysql.connector.connect(user='root', password='cs411t47db',
@@ -29,8 +33,10 @@ def getCloseByRoutes(lat, lon):
   for result in mycursor.stored_results():
     details = result.fetchall()
 
-  for det in details:
-    print(det)
+  return details
+
+  mycursor.close()
+  db.close()
 
 # getCloseByStops(-23.432174,-46.787095)
-getCloseByRoutes(-23.432174,-46.787095)
+# # getCloseByRoutes(-23.432174,-46.787095)
