@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 import requests
 import mysql.connector
+from ConnectionDB import *
 
 app = Flask(__name__)
 
@@ -83,18 +84,32 @@ def test_db():
 
 @app.route('/get_bus_stops')
 def get_bus_stops():
+    #Getting input of an address and return the list of stops id
+    response = requests.get(GEOCODING_API_URL, params={
+        'address': address,
+        'key': GEOCODING_API_KEY
+    })
+
+    if response.status_code != 200:
+        return jsonify({'error': 'Geocoding API error'}), response.status_code
+
+    geocoding_data = response.json()
+    if geocoding_data['status'] != 'OK':
+        return jsonify({'error': 'Invalid address'}), 400
+
+    # Extract latitude and longitude
+    location = geocoding_data['results'][0]['geometry']['location']
+    latitude = location['lat']
+    longitude = location['lng']
     try:
-        conn = mysql.connector.connect(user='root', password='cs411t47db', host='34.28.132.25', database='cs411')
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT stop_name, stop_lat, stop_lon FROM Bus_stops")
-        bus_stops = cursor.fetchall()
-        return jsonify(bus_stops)
+        # conn = mysql.connector.connect(user='root', password='cs411t47db', host='34.28.132.25', database='cs411')
+        # cursor = conn.cursor(dictionary=True)
+        # cursor.execute("SELECT stop_name, stop_lat, stop_lon FROM Bus_stops")
+        # bus_stops = cursor.fetchall()
+        # return jsonify(bus_stops)
+        return jsonify(getCloseByStops(latitude,longitude))
     except Exception as e:
         return jsonify({'error': f"Failed to fetch bus stops: {str(e)}"}), 500
-    finally:
-        cursor.close()
-        conn.close()
-
 
 @app.route('/test_connector')
 def test_connector():
