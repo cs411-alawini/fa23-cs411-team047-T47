@@ -28,7 +28,7 @@ GEOCODING_API_KEY = 'AIzaSyBS-S37L58YssF52HQocELjBEI4s1-NSiM'
 def geocode_address():
     data = request.get_json()
     address = data.get('address')
-
+    # print(address)
     # Geocode the address using the Google Geocoding API
     response = requests.get(GEOCODING_API_URL, params={
         'address': address,
@@ -46,6 +46,7 @@ def geocode_address():
     location = geocoding_data['results'][0]['geometry']['location']
     latitude = location['lat']
     longitude = location['lng']
+    # print(latitude, longitude)
 
     # At this point, you can send back the latitude and longitude to the frontend
     # or if you need to save this in the database, you can do so here.
