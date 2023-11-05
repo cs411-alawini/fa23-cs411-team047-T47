@@ -51,7 +51,7 @@ def geocode_address():
 
     # At this point, you can send back the latitude and longitude to the frontend
     # or if you need to save this in the database, you can do so here.
-
+    # return latitude and longtitude
     return jsonify({
         'latitude': latitude,
         'longitude': longitude
