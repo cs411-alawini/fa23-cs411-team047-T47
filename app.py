@@ -109,10 +109,6 @@ def get_bus_stops():
         return jsonify(getCloseByStops(latitude,longitude))
     except Exception as e:
         return jsonify({'error': f"Failed to fetch bus stops: {str(e)}"}), 500
-    finally:
-        cursor.close()
-        conn.close()
-
 
 @app.route('/test_connector')
 def test_connector():

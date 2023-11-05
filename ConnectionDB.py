@@ -39,4 +39,4 @@ def getCloseByRoutes(lat, lon):
   db.close()
 
 # getCloseByStops(-23.432174,-46.787095)
-# # getCloseByRoutes(-23.432174,-46.787095)
+# getCloseByRoutes(-23.432174,-46.787095)
