@@ -16,14 +16,6 @@
         let map;
 
 
-                // Sample bus stops data
-        const busStops = [
-            { lat: -23.556520, lng: -46.643308, name: "Stop A" },
-            { lat: -23.558520, lng: -46.648308, name: "Stop B" },
-            { lat: -23.554520, lng: -46.640308, name: "Stop C" },
-            // ... Add more bus stop coordinates and names as required
-        ];
-
         function placeMarkers(busStops) {
             for (let stop of busStops) {
                 const marker = new google.maps.Marker({
@@ -42,21 +34,91 @@
             }
         }
 
+
+        map.addListener('idle', function() {
+            // Get the current bounds of the map
+            const bounds = map.getBounds();
+            const ne = bounds.getNorthEast(); // { lat: ..., lng: ... }
+            const sw = bounds.getSouthWest(); // { lat: ..., lng: ... }
+
+            // Fetch route shapes data within bounds from the backend
+            fetch(`/get_route_shapes?ne_lat=${ne.lat()}&ne_lng=${ne.lng()}&sw_lat=${sw.lat()}&sw_lng=${sw.lng()}`)
+                .then(response => response.json())
+                .then(shapesList => {
+                    // First clear all existing shapes
+                    clearShapes();
+                    // Then draw new shapes
+                    shapesList.forEach(shape => {
+                        drawShapeOnMap(shape.points);
+                    });
+                })
+                .catch(error => console.error('Error fetching shapes:', error));
+        });
+
+        // commented out for now 
+        // original purpose was to fetch bus stops data from the backend and place markers
+        // function initMap() {
+        //     const saoPaulo = { lat: -23.550520, lng: -46.633308 }; // São Paulo's coordinates
+
+        //     map = new google.maps.Map(document.getElementById("map"), {
+        //         center: saoPaulo,
+        //         zoom: 12
+        //     });
+
+        //     // Fetch bus stops data from the backend and place markers
+        //     // fetch('/get_bus_stops')
+        //     // .then(response => response.json())
+        //     // .then(data => {
+        //     //     placeMarkers(data);
+        //     // });
+
+        //     // Fetch route shapes data from the backend and draw polylines
+        //     fetch('/get_route_shapes')
+        //     .then(response => response.json())
+        //     .then(shapes => {
+        //         drawShapesOnMap(shapes);
+        //     })
+        //     .catch(error => console.error('Error fetching shapes:', error));
+        // }
+
+
+        function drawShapeOnMap(shapePoints) {
+            const shapeCoordinates = shapePoints.map(point => ({ lat: point.lat, lng: point.lng }));
+
+            const shapePath = new google.maps.Polyline({
+                path: shapeCoordinates,
+                geodesic: true,
+                strokeColor: '#FF0000',
+                strokeOpacity: 1.0,
+                strokeWeight: 2
+            });
+
+            shapePath.setMap(map);
+        }
+
+
+
         function initMap() {
             const saoPaulo = { lat: -23.550520, lng: -46.633308 }; // São Paulo's coordinates
 
             map = new google.maps.Map(document.getElementById("map"), {
                 center: saoPaulo,
-                zoom: 12
+                zoom: 13
             });
 
-            // Fetch bus stops data from the backend and place markers
-            fetch('/get_bus_stops')
+            // Fetch route shapes data from the backend and draw polylines
+            fetch('/get_route_shapes')
             .then(response => response.json())
-            .then(data => {
-                placeMarkers(data);
-            });
+            .then(shapesList => {
+                shapesList.forEach(shape => {
+                    drawShapeOnMap(shape.points);
+                });
+            })
+            .catch(error => console.error('Error fetching shapes:', error));
         }
+
+
+
 
     </script>
 </head>
