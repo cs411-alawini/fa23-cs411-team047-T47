@@ -90,13 +90,25 @@
                 body: JSON.stringify({ address: address }),
             })
             .then(response => response.json())
-            
             .then(data => {
                 if (data.error) {
                     alert(data.error);
-                } 
+                } else {
+                    // Call a function to handle the map update
+                    updateMapWithNewStops(data.stops);
+                }
             });
         });
+
+        function updateMapWithNewStops(stops) {
+            // Clear previous markers if necessary
+            // ...
+
+            // Add new markers
+            for (let stop of stops) {
+                // Your existing code to place markers
+            }
+        }
     </script>
 </body>
 </html>

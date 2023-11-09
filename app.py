@@ -6,11 +6,16 @@ from ConnectionDB import *
 
 app = Flask(__name__)
 
+
 # Assuming you have set up Cloud SQL with a public IP and have whitelisted your server's IP to access it.
 # Replace the placeholders with your actual credentials.
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:cs411t47db@34.28.132.25/cs411'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
+# @app.route('/')
+# def index():
+#     return render_template('index.html')
 
 # Database model for stops
 class BusStop(db.Model):
@@ -47,6 +52,7 @@ def geocode_address():
     location = geocoding_data['results'][0]['geometry']['location']
     latitude = location['lat']
     longitude = location['lng']
+
     # print(latitude, longitude)
 
     # At this point, you can send back the latitude and longitude to the frontend
@@ -84,6 +90,15 @@ def test_db():
 
 @app.route('/get_bus_stops')
 def get_bus_stops():
+    data = request.get_json()
+    address = data.get('address')
+
+    # Geocode the address using the Google Geocoding API
+    response = requests.get(GEOCODING_API_URL, params={
+        'address': address,
+        'key': GEOCODING_API_KEY
+    })
+
     #Getting input of an address and return the list of stops id
     response = requests.get(GEOCODING_API_URL, params={
         'address': address,
@@ -101,15 +116,14 @@ def get_bus_stops():
     location = geocoding_data['results'][0]['geometry']['location']
     latitude = location['lat']
     longitude = location['lng']
-    try:
-        # conn = mysql.connector.connect(user='root', password='cs411t47db', host='34.28.132.25', database='cs411')
-        # cursor = conn.cursor(dictionary=True)
-        # cursor.execute("SELECT stop_name, stop_lat, stop_lon FROM Bus_stops")
-        # bus_stops = cursor.fetchall()
-        # return jsonify(bus_stops)
-        return jsonify(getCloseByStops(latitude,longitude))
-    except Exception as e:
-        return jsonify({'error': f"Failed to fetch bus stops: {str(e)}"}), 500
+
+    # Check if the address in range of the city
+    if inRange(latitude, longitude):
+        stops = getCloseByStops(latitude, longitude)
+    for info in stops:
+        print(info)
+    else:
+        return jsonify({'error': 'Invalid address'}), 400
 
 @app.route('/test_connector')
 def test_connector():
