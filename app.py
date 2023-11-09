@@ -17,7 +17,7 @@ db = SQLAlchemy(app)
 # def index():
 #     return render_template('index.html')
 
-# Database model for stops
+# Database model for Bus_stops
 class BusStop(db.Model):
     __tablename__ = 'Bus_stops'  # Ensure this matches your actual table name in MySQL
     stop_id = db.Column(db.Integer, primary_key=True)
@@ -25,6 +25,29 @@ class BusStop(db.Model):
     stop_desc = db.Column(db.String(256), nullable=True)
     stop_lat = db.Column(db.Float, nullable=False)
     stop_lon = db.Column(db.Float, nullable=False)
+
+# Database model for Shape
+class Shape(db.Model):
+    __tablename__ = 'Shape'
+    shape_id = db.Column(db.Integer, primary_key=True)
+    shape_pt_lat = db.Column(db.Float, nullable=False)
+    shape_pt_lon = db.Column(db.Float, nullable=False)
+    shape_pt_sequence = db.Column(db.Integer, primary_key=True)
+    shape_dist_traveled = db.Column(db.Float, nullable=True)
+
+# Database model for trips
+class Trips(db.Model):
+    __tablename__ = 'Trips'  # This should match the actual table name in your database
+    trip_id = db.Column(db.String(256), primary_key=True)
+    route_id = db.Column(db.String(256), nullable=False)
+    service_id = db.Column(db.String(5), nullable=False)
+    trip_headsign = db.Column(db.String(256), nullable=True)
+    direction_id = db.Column(db.Integer)
+    shape_id = db.Column(db.Integer, nullable=False)
+    
+    # Define the relationship to the Shape model (if not already defined)
+    #shape = db.relationship('Shape', backref=db.backref('trips', lazy=True))
+
 
 # Geocoding API setup
 GEOCODING_API_URL = 'https://maps.googleapis.com/maps/api/geocode/json'
@@ -34,7 +57,7 @@ GEOCODING_API_KEY = 'AIzaSyBS-S37L58YssF52HQocELjBEI4s1-NSiM'
 def geocode_address():
     data = request.get_json()
     address = data.get('address')
-    # print(address)
+
     # Geocode the address using the Google Geocoding API
     response = requests.get(GEOCODING_API_URL, params={
         'address': address,
@@ -125,26 +148,37 @@ def get_bus_stops():
     else:
         return jsonify({'error': 'Invalid address'}), 400
 
-@app.route('/test_connector')
-def test_connector():
+@app.route('/get_route_shapes')
+def get_route_shapes():
     try:
-        db = mysql.connector.connect(user='root', password='cs411t47db',
-                                     host='34.28.132.25',
-                                     database='cs411')
+        ne_lat = request.args.get('ne_lat', type=float)
+        ne_lng = request.args.get('ne_lng', type=float)
+        sw_lat = request.args.get('sw_lat', type=float)
+        sw_lng = request.args.get('sw_lng', type=float)
 
-        mycursor = db.cursor()
-        mycursor.execute("SELECT * FROM Calendar")
-        myresult = mycursor.fetchall()
+        shapes = {}
+        shape_ids = [trip.shape_id for trip in Trips.query.all()]
         
-        # Convert the results into a list of dictionaries for JSON serialization
-        columns = mycursor.column_names
-        results = [dict(zip(columns, row)) for row in myresult]
-        
-        return jsonify(results)
+        for shape_id in shape_ids:
+            shape_points = Shape.query.filter_by(shape_id=shape_id).order_by(Shape.shape_pt_sequence).all()
+            shapes[shape_id] = [{'lat': point.shape_pt_lat, 'lng': point.shape_pt_lon, 'sequence': point.shape_pt_sequence} for point in shape_points]
 
+        shapes_list = [{'shape_id': k, 'points': v} for k, v in shapes.items()]
+
+
+
+        print("hello")
+        
+
+        # Now you have a dictionary with shape_id as key and all its points as values
+        # Convert it to a list to serialize as JSON
+        shapes_list = [{'shape_id': shape_id, 'points': points} for shape_id, points in shapes.items()]
+        
+        #print(shapes_list)
+
+        return jsonify(shapes_list)
     except Exception as e:
-        return jsonify({'error': f"Database query failed using mysql.connector: {str(e)}"}), 500
-
+        return jsonify({'error': str(e)}), 500
 
 
 
