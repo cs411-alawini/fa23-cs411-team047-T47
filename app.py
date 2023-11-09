@@ -47,7 +47,7 @@ def geocode_address():
     location = geocoding_data['results'][0]['geometry']['location']
     latitude = location['lat']
     longitude = location['lng']
-    # print(latitude, longitude)
+    print(latitude, longitude)
 
     # At this point, you can send back the latitude and longitude to the frontend
     # or if you need to save this in the database, you can do so here.

@@ -75,6 +75,8 @@
 
     <div id="map"></div>
 
+    <p>Latitude: <span id="latitude"></span></p>
+    <p>Longitude: <span id="longitude"></span></p>
     <!-- JavaScript to handle the form submission -->
     <script>
         // Previous JavaScript code ...
@@ -95,6 +97,14 @@
                 if (data.error) {
                     alert(data.error);
                 } 
+                else {
+                    // If successful, display the latitude and longitude
+                    document.getElementById('latitude').textContent = data.latitude;
+                    document.getElementById('longitude').textContent = data.longitude;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
             });
         });
     </script>
