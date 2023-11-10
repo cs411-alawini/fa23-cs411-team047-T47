@@ -157,10 +157,11 @@
             .then(data => {
                 if (data.error) {
                     alert(data.error);
-                } else {
-                    // Call a function to handle the map update
-                    updateMapWithNewStops(data.stops);
-                }
+                } 
+                // else {
+                //     // Call a function to handle the map update
+                //     updateMapWithNewStops(data.stops);
+                // }
                 else {
                     // If successful, display the latitude and longitude
                     document.getElementById('latitude').textContent = data.latitude;

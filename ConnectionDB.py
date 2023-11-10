@@ -27,7 +27,7 @@ def calculate_new_coordinates(lat, lon, bearing_degrees):
 
     return new_lat, new_lon
 
-def validRange(lat, lon):
+def valid_range(lat, lon):
   max_lat = calculate_new_coordinates(lat, lon, 0)[0]
   min_lat = calculate_new_coordinates(lat, lon, 180)[0]
   max_lon = calculate_new_coordinates(lat, lon, 90)[1]
@@ -45,7 +45,7 @@ def validRange(lat, lon):
     return True
 
 # Get the close by stops within 400 meter circle of given address
-def getCloseByStops(lat, lon):
+def get_close_by_stops(lat, lon):
   db = mysql.connector.connect(user='root', password='cs411t47db',
                                 host='34.28.132.25',
                                 database='cs411')
@@ -65,7 +65,7 @@ def getCloseByStops(lat, lon):
   db.close()
 
 # Get the close by routes within 400 meter circle of given address
-def getCloseByRoutes(lat, lon):
+def get_close_by_routes(lat, lon):
   db = mysql.connector.connect(user='root', password='cs411t47db',
                                 host='34.28.132.25',
                                 database='cs411')
@@ -81,3 +81,6 @@ def getCloseByRoutes(lat, lon):
 
   mycursor.close()
   db.close()
+
+# get_close_by_routes(-23.439609, -46.807039)
+# get_close_by_stops(-23.439609, -46.807039)

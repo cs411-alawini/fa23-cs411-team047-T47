@@ -81,6 +81,16 @@ def geocode_address():
     # At this point, you can send back the latitude and longitude to the frontend
     # or if you need to save this in the database, you can do so here.
     # return latitude and longtitude
+
+    # Check if the address in range of the city
+    if valid_range(latitude, longitude):
+        stops = get_close_by_stops(latitude, longitude)
+        points = [{'lat': row[2], 'lng': row[3]} for row in stops]
+        # stops_dic = {}
+        # stops_list = [{'id': row[0], 'name': row[1]} for row in stops]
+        for info in stops:
+            print(info)
+
     return jsonify({
         'latitude': latitude,
         'longitude': longitude
@@ -111,7 +121,7 @@ def test_db():
         return jsonify({'error': f"Database connection failed using mysql.connector: {str(e)}"}), 500
 
 
-@app.route('/get_bus_stops')
+@app.route('/get_bus_stops', methods=['POST'])
 def get_bus_stops():
     data = request.get_json()
     address = data.get('address')
@@ -141,12 +151,16 @@ def get_bus_stops():
     longitude = location['lng']
 
     # Check if the address in range of the city
-    if inRange(latitude, longitude):
-        stops = getCloseByStops(latitude, longitude)
-    for info in stops:
-        print(info)
+    if valid_range(latitude, longitude):
+        stops = get_close_by_stops(latitude, longitude)
+        stops_list = [{'id': row[0], 'name': row[1], 'coor': (row[2],row[3])} for row in stops]
+        for info in stops_list:
+            print(info)
+
+        return jsonify(stops_list)
     else:
-        return jsonify({'error': 'Invalid address'}), 400
+        return jsonify({'error': 'Not in the city'}), 400
+    
 
 @app.route('/get_route_shapes')
 def get_route_shapes():
