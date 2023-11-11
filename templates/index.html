@@ -20,9 +20,6 @@
         <button type="submit">Find Stops</button>
     </form>
 
-    <p>Latitude: <span id="latitude"></span></p>
-    <p>Longitude: <span id="longitude"></span></p>
-
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBS-S37L58YssF52HQocELjBEI4s1-NSiM&callback=initMap"></script>
 
     <script>
@@ -38,6 +35,7 @@
         let allRoutesData = []; // Array to store all routes data
         let allBusStopsData = []; // Array to store all bus stops data
         let shapes = [];
+        let closeByStops = [];
 
         // clear the current routes and bus stops in the maps
         function clearMap() {
@@ -210,7 +208,7 @@
         document.getElementById('addressForm').addEventListener('submit', function(event) {
             event.preventDefault(); // to prevent the form from submitting traditionally
             const address = document.getElementById('address').value;
-            fetch('/geocode', {
+            fetch('/get_bus_stops', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -222,14 +220,9 @@
                 if (data.error) {
                     alert(data.error);
                 } 
-                // else {
-                //     // Call a function to handle the map update
-                //     updateMapWithNewStops(data.stops);
-                // }
                 else {
-                    // If successful, display the latitude and longitude
-                    document.getElementById('latitude').textContent = data.latitude;
-                    document.getElementById('longitude').textContent = data.longitude;
+                    // data:'id', 'name', 'coor'
+                    closeByStops = data;
                 }
             })
             .catch(error => {
