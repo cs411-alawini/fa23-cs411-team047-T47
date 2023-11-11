@@ -4,85 +4,131 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bus Schedule App with Map</title>
-    <style>
-        #map {
-            height: 400px;
-            width: 100%;
-            margin-top: 20px;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <h1>Bus Schedule App with Map</h1>
+    <div id="loadingBarContainer">
+        <div id="loadingBar"></div>
+    </div>
+    <div id="map"></div>
+    <button id="resetMapButton">Reset Map</button>
+    
+    <form id="addressForm">
+        <input type="text" id="address" placeholder="Enter address" required>
+        <button type="submit">Find Stops</button>
+    </form>
+
+    <p>Latitude: <span id="latitude"></span></p>
+    <p>Longitude: <span id="longitude"></span></p>
+
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBS-S37L58YssF52HQocELjBEI4s1-NSiM&callback=initMap"></script>
+
     <script>
+        // Custom map styles to hide default bus stops
+        const mapStyles = [
+            {
+                featureType: "transit.station.bus",
+                stylers: [{ visibility: "off" }]
+            }
+        ];
+
         let map;
+        let allRoutesData = []; // Array to store all routes data
+        let allBusStopsData = []; // Array to store all bus stops data
+        let shapes = [];
 
+        // clear the current routes and bus stops in the maps
+        function clearMap() {
+            // Clear all markers
+            for (let marker of allBusStopsData) {
+                marker.setMap(null);
+            }
 
+            allBusStopsData = []; // Reset the array
+
+            // Clear all shapes
+            for (let shape of shapes) {
+                shape.setMap(null);
+            }
+
+            shapes = []; // Reset the shapes array
+        }
+
+        function redrawStoredData() {
+            // Redraw all routes using stored data
+            allRoutesData.forEach(shape => {
+                drawShapeOnMap(shape.points, shape.shape_id);
+            });
+        }
+
+        document.getElementById('resetMapButton').addEventListener('click', function() {
+            clearMap();
+            redrawStoredData();
+        });
+        
+        
+        // mark the bus stops in the maps
         function placeMarkers(busStops) {
+            const infoWindow = new google.maps.InfoWindow();
+
             for (let stop of busStops) {
                 const marker = new google.maps.Marker({
                     position: { lat: parseFloat(stop.stop_lat), lng: parseFloat(stop.stop_lon) },
                     map: map,
                     title: stop.stop_name
                 });
+                allBusStopsData.push(marker);
                 
-                const infoWindow = new google.maps.InfoWindow({
-                    content: `<h3>${stop.stop_name}</h3>`
-                });
-
                 marker.addListener('click', function() {
+                    infoWindow.setContent(`<h3>${stop.stop_name}</h3>`);
                     infoWindow.open(map, marker);
                 });
             }
+            
+            // Add listener to the map to close the info window when the map is clicked
+            map.addListener('click', function() {
+                if (infoWindow) {
+                    infoWindow.close();
+                }
+            });
         }
 
+        function fetchBusStopsForRoute(routeId) {
+            updateLoadingBar(80); // Before fetching bus stops
 
-        map.addListener('idle', function() {
-            // Get the current bounds of the map
-            const bounds = map.getBounds();
-            const ne = bounds.getNorthEast(); // { lat: ..., lng: ... }
-            const sw = bounds.getSouthWest(); // { lat: ..., lng: ... }
-
-            // Fetch route shapes data within bounds from the backend
-            fetch(`/get_route_shapes?ne_lat=${ne.lat()}&ne_lng=${ne.lng()}&sw_lat=${sw.lat()}&sw_lng=${sw.lng()}`)
+            fetch(`/get_bus_stops_by_route?route_id=${routeId}`)
                 .then(response => response.json())
-                .then(shapesList => {
-                    // First clear all existing shapes
-                    clearShapes();
-                    // Then draw new shapes
-                    shapesList.forEach(shape => {
-                        drawShapeOnMap(shape.points);
-                    });
+                .then(busStops => {
+                    placeMarkers(busStops);
+                    updateLoadingBar(90); // Update to 90% after fetching bus stops
                 })
-                .catch(error => console.error('Error fetching shapes:', error));
-        });
+                .catch(error => console.error('Error fetching bus stops:', error));
+        }
 
-        // commented out for now 
-        // original purpose was to fetch bus stops data from the backend and place markers
-        // function initMap() {
-        //     const saoPaulo = { lat: -23.550520, lng: -46.633308 }; // São Paulo's coordinates
+        // Fetch route shapes and bus stops data for the input shape ID
+        // clear the current routes and bus stops in the maps
+        // then draw the new routes and bus stops fetched
 
-        //     map = new google.maps.Map(document.getElementById("map"), {
-        //         center: saoPaulo,
-        //         zoom: 12
-        //     });
+        function fetchAndStoreData() {
+            updateLoadingBar(30); // Indicate progress
 
-        //     // Fetch bus stops data from the backend and place markers
-        //     // fetch('/get_bus_stops')
-        //     // .then(response => response.json())
-        //     // .then(data => {
-        //     //     placeMarkers(data);
-        //     // });
+            fetch('/get_route_shapes')
+                .then(response => response.json())
+                .then(data => {
+                    allRoutesData = data;
+                    updateLoadingBar(60); // Update to 60% after fetching route shapes
+                    data.forEach(shape => drawShapeOnMap(shape.points, shape.shape_id));
+                })
+                .catch(error => console.error('Error:', error))
+                .finally(() => {
+                    updateLoadingBar(70); // Update further after processing data
+                });
+        }
 
-        //     // Fetch route shapes data from the backend and draw polylines
-        //     fetch('/get_route_shapes')
-        //     .then(response => response.json())
-        //     .then(shapes => {
-        //         drawShapesOnMap(shapes);
-        //     })
-        //     .catch(error => console.error('Error fetching shapes:', error));
-        // }
-
-
-        function drawShapeOnMap(shapePoints) {
+        // given the shape points and shape id, draw the shape(route of a bus/trip) on the map
+        function drawShapeOnMap(shapePoints, shapeId) {
             const shapeCoordinates = shapePoints.map(point => ({ lat: point.lat, lng: point.lng }));
 
             const shapePath = new google.maps.Polyline({
@@ -93,55 +139,73 @@
                 strokeWeight: 2
             });
 
+            shapes.push(shapePath); // Store the shape in the array
+
+            // if (shapes.length < 1) {
+            //     shapes.push(shapePath); // Store the shape
+            // }
+
+            shapePath.shapeId = shapeId; // Assign the shape ID
+
+            // Add click listener to the shape
+            shapePath.addListener('click', function() {
+                fetchRouteAndStops(this.shapeId);
+            });
+
             shapePath.setMap(map);
         }
 
+        function fetchRouteAndStops(shapeId) {
+            fetch(`/get_route_and_stops?shape_id=${shapeId}`)
+                .then(response => response.json())
+                .then(data => {
+                    clearMap(); // You might need to create this function to clear existing routes and stops
+                    drawShapeOnMap(data.shape, data.route_id);
+                    placeMarkers(data.stops);
+                })
+                .catch(error => console.error('Error:', error));
+        }
 
 
         function initMap() {
-            const saoPaulo = { lat: -23.550520, lng: -46.633308 }; // São Paulo's coordinates
+            // Start with the loading bar
+            updateLoadingBar(10); // Start with 10% to indicate initiation
 
+            const saoPaulo = { lat: -23.550520, lng: -46.633308 };
             map = new google.maps.Map(document.getElementById("map"), {
                 center: saoPaulo,
-                zoom: 13
+                zoom: 13,
+                styles: mapStyles
             });
 
-            // Fetch route shapes data from the backend and draw polylines
-            fetch('/get_route_shapes')
-            .then(response => response.json())
-            .then(shapesList => {
-                shapesList.forEach(shape => {
-                    drawShapeOnMap(shape.points);
-                });
-            })
-            .catch(error => console.error('Error fetching shapes:', error));
+            // Simulate loading data, then hide the loading bar
+            fetchAndStoreData();
+
+            onMapAndDataFullyLoaded();
+        }
+
+        function onMapAndDataFullyLoaded() {
+            updateLoadingBar(100); // Indicate completion
+            setTimeout(() => { hideLoadingBar(); }, 500); // Hide after a short delay
         }
 
 
 
+        // Functions to control the loading bar
+        function updateLoadingBar(percentage) {
+            document.getElementById('loadingBar').style.width = percentage + '%';
+        }
 
-    </script>
-</head>
-<body>
-    <h1>Bus Schedule App with Map</h1>
-    <div id="map"></div>
-</body>
-<body>
-    <h1>Bus Schedule App with Map</h1>
-    
-    <!-- Address form -->
-    <form id="addressForm">
-        <input type="text" id="address" placeholder="Enter address" required>
-        <button type="submit">Find Stops</button>
-    </form>
+        function hideLoadingBar() {
+            document.getElementById('loadingBarContainer').style.display = 'none';
+        }
 
-    <div id="map"></div>
+        
+        document.getElementById('resetMapButton').addEventListener('click', function() {
+            clearMap(); // Clear the current map data
+            redrawStoredData(); // Redraw using stored data
+        });
 
-    <p>Latitude: <span id="latitude"></span></p>
-    <p>Longitude: <span id="longitude"></span></p>
-    <!-- JavaScript to handle the form submission -->
-    <script>
-        // Previous JavaScript code ...
 
         document.getElementById('addressForm').addEventListener('submit', function(event) {
             event.preventDefault(); // to prevent the form from submitting traditionally
@@ -173,6 +237,7 @@
             });
         });
 
+        
         function updateMapWithNewStops(stops) {
             // Clear previous markers if necessary
             // ...
@@ -182,6 +247,13 @@
                 // Your existing code to place markers
             }
         }
+
+
     </script>
+
+    <!-- <script src="{{ url_for('static', filename='js/data.js') }}" type="module"></script>
+    <script src="{{ url_for('static', filename='js/map.js') }}" type="module"></script>
+    <script src="{{ url_for('static', filename='js/ui.js') }}" type="module"></script> -->
+
 </body>
 </html>

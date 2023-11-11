@@ -13,10 +13,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:cs411t47db@34.28.1
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# @app.route('/')
-# def index():
-#     return render_template('index.html')
-
 # Database model for Bus_stops
 class BusStop(db.Model):
     __tablename__ = 'Bus_stops'  # Ensure this matches your actual table name in MySQL
@@ -45,8 +41,13 @@ class Trips(db.Model):
     direction_id = db.Column(db.Integer)
     shape_id = db.Column(db.Integer, nullable=False)
     
-    # Define the relationship to the Shape model (if not already defined)
-    #shape = db.relationship('Shape', backref=db.backref('trips', lazy=True))
+# Database model for arrival
+class Arrival(db.Model):
+    __tablename__ = 'Arrival'
+    trip_id = db.Column(db.String(13), db.ForeignKey('Trips.trip_id'), primary_key=True)
+    stop_id = db.Column(db.Integer, db.ForeignKey('Bus_stops.stop_id'), primary_key=True)
+    arrival_time = db.Column(db.String(10))
+    stop_sequence = db.Column(db.Integer)
 
 
 # Geocoding API setup
@@ -165,37 +166,42 @@ def get_bus_stops():
 @app.route('/get_route_shapes')
 def get_route_shapes():
     try:
-        ne_lat = request.args.get('ne_lat', type=float)
-        ne_lng = request.args.get('ne_lng', type=float)
-        sw_lat = request.args.get('sw_lat', type=float)
-        sw_lng = request.args.get('sw_lng', type=float)
-
         shapes = {}
         shape_ids = [trip.shape_id for trip in Trips.query.all()]
         
+        # Get all the points for each shape_id from the Shape table that matches the shape_id from the Trips table
         for shape_id in shape_ids:
             shape_points = Shape.query.filter_by(shape_id=shape_id).order_by(Shape.shape_pt_sequence).all()
             shapes[shape_id] = [{'lat': point.shape_pt_lat, 'lng': point.shape_pt_lon, 'sequence': point.shape_pt_sequence} for point in shape_points]
 
-        shapes_list = [{'shape_id': k, 'points': v} for k, v in shapes.items()]
-
-
-
-        print("hello")
-        
-
-        # Now you have a dictionary with shape_id as key and all its points as values
-        # Convert it to a list to serialize as JSON
+        # Convert a dictionary with (shape_id as key and all its points as values) to a list to serialize as JSON
         shapes_list = [{'shape_id': shape_id, 'points': points} for shape_id, points in shapes.items()]
-        
-        #print(shapes_list)
 
         return jsonify(shapes_list)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/get_route_and_stops')
+def get_route_and_stops():
+    shape_id = request.args.get('shape_id')
 
+    print(shape_id)
+
+    # Get the shape for the route
+    # route_shape = Shape.query.join(Trips, Shape.shape_id == Trips.shape_id).order_by(Shape.shape_pt_sequence).all()
+    # get the shape_id from route_id
+    #shape_id = Trips.query.filter_by(Trips.route_id==route_id).first().shape_id
+
+    route_shape = Shape.query.filter(Shape.shape_id == shape_id).order_by(Shape.shape_pt_sequence).all()
+    shape_points = [{'lat': point.shape_pt_lat, 'lng': point.shape_pt_lon} for point in route_shape]
+
+    # Get the stops for the route
+    bus_stops = BusStop.query.join(Arrival, BusStop.stop_id == Arrival.stop_id).join(Trips, Arrival.trip_id == Trips.trip_id).filter(Trips.shape_id == shape_id).all()
+    stops = [{'stop_name': stop.stop_name, 'stop_lat': stop.stop_lat, 'stop_lon': stop.stop_lon} for stop in bus_stops]
+
+
+    return jsonify({'route_id': shape_id, 'shape': shape_points, 'stops': stops})
 
 
 
