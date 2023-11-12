@@ -8,17 +8,52 @@
 </head>
 
 <body>
-    <h1>Bus Schedule App with Map</h1>
-    <div id="loadingBarContainer">
-        <div id="loadingBar"></div>
-    </div>
-    <div id="map"></div>
-    <button id="resetMapButton">Reset Map</button>
-    
-    <form id="addressForm">
-        <input type="text" id="address" placeholder="Enter address" required>
-        <button type="submit">Find Stops</button>
+
+    <!-- Login Section -->
+    <form id="loginForm" method="post" action="/login">
+        <h2>Login</h2>
+        <p>username
+            <input type="text" id="loginUsername" name="username">
+        </p>
+
+        <p>password
+            <input type="password" id="loginPassword" name="password">
+        </p>
+        <button type="submit">Login</button>
     </form>
+
+    <!-- Registration Section -->
+    <form id="registrationForm" method="post" action="/register">
+        <h2>Register</h2>
+        <p>username
+            <input type="text" id="registerUsername" name="username"></p>
+        <p>email 
+            <input type="email" id="registerEmail" name="email"></p>
+        <p>password
+            <input type="password" id="registerPassword" name="password"></p>
+        <button type="submit">Register</button>
+    </form>
+    
+    <!-- Main Content Section -->
+    <div id="mainContent" style="display:none;">
+        <h1>Bus Schedule App with Map</h1>
+        
+        <div id="map"></div>
+        <div id="loadingBarContainer">
+            <div id="loadingBar"></div>
+        </div>
+
+        <button id="resetMapButton">Reset Map</button>
+        
+        <form id="addressForm">
+            <input type="text" id="address" placeholder="Enter address" required>
+            <button type="submit">Find Stops</button>
+        </form>
+
+    </div>
+
+    <!-- shedule page content -->
+
 
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBS-S37L58YssF52HQocELjBEI4s1-NSiM&callback=initMap"></script>
 
@@ -26,7 +61,9 @@
         // Custom map styles to hide default bus stops
         const mapStyles = [
             {
-                featureType: "transit.station.bus",
+                // featureType: "transit.station.bus",
+                // stylers: [{ visibility: "off" }]
+                featureType: "transit",
                 stylers: [{ visibility: "off" }]
             }
         ];
@@ -221,12 +258,73 @@
                     alert(data.error);
                 } 
                 else {
-                    // data:'id', 'name', 'coor'
                     closeByStops = data;
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
+            });
+        });
+
+        // Handle Login Form Submission
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username: username, password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                }
+                else {
+                    // go into the main content
+                    document.getElementById('mainContent').style.display = 'block';
+                    // hide the login and registration forms
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('registrationForm').style.display = 'none';
+
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("An error occurred");
+            });
+        });
+
+        // Handle Registration Form Submission
+        document.getElementById('registrationForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const username = document.getElementById('registerUsername').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+
+            fetch('/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username: username, email: email, password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    alert("Registration successful");
+                    // Redirect to another page or update UI
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("An error occurred");
             });
         });
 
