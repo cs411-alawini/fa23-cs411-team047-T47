@@ -18,9 +18,8 @@
         </ul>
     </nav>
 
-    <!-- Login Section -->
-    <form id="loginForm" method="post" action="/login">
-        <h2>Login</h2>
+    <div id="loginPage" style="display:block;">
+        <!-- <h2>Login</h2>
         <p>username
             <input type="text" id="loginUsername" name="username">
         </p>
@@ -28,21 +27,33 @@
         <p>password
             <input type="password" id="loginPassword" name="password">
         </p>
-        <button type="submit">Login</button>
-    </form>
-    <!-- <p> First stop: <span id = "test"> </span> </p> -->
+        <button type="submit">Login</button> -->
+        <!-- Login Section -->
+        <form id="loginForm" method="post" action="/login">
+            <h2>Login</h2>
+            <p>username
+                <input type="text" id="loginUsername" name="username">
+            </p>
 
-    <!-- Registration Section -->
-    <form id="registrationForm" method="post" action="/register">
-        <h2>Register</h2>
-        <p>username
-            <input type="text" id="registerUsername" name="username"></p>
-        <p>email 
-            <input type="email" id="registerEmail" name="email"></p>
-        <p>password
-            <input type="password" id="registerPassword" name="password"></p>
-        <button type="submit">Register</button>
-    </form>
+            <p>password
+                <input type="password" id="loginPassword" name="password">
+            </p>
+            <button type="submit">Login</button>
+        </form>
+        <!-- <p> First stop: <span id = "test"> </span> </p> -->
+
+        <!-- Registration Section -->
+        <form id="registrationForm" method="post" action="/register">
+            <h2>Register</h2>
+            <p>username
+                <input type="text" id="registerUsername" name="username"></p>
+            <p>email 
+                <input type="email" id="registerEmail" name="email"></p>
+            <p>password
+                <input type="password" id="registerPassword" name="password"></p>
+            <button type="submit">Register</button>
+        </form>
+    </div>
     
     <!-- Main Content Section -->
     <div id="mainContent" style="display:none;">
@@ -361,9 +372,15 @@
 
                     // go into the main content
                     document.getElementById('mainContent').style.display = 'block';
-                    // hide the login and registration forms
-                    document.getElementById('loginForm').style.display = 'none';
-                    document.getElementById('registrationForm').style.display = 'none';
+                    document.getElementById('loginPage').style.display = 'none';
+
+                    // empty out the login form
+                    document.getElementById('loginUsername').value = '';
+                    document.getElementById('loginPassword').value = '';
+
+                    // change the content of the logout button to logout
+                    const navLogin = document.getElementById('navLogin');
+                    navLogin.textContent = 'Logout';
 
                 }
             })
@@ -378,11 +395,36 @@
 
         // Function to handle navigation
         function navigateTo(page) {
+
+            // if the user is not logged in, do not allow them to navigate to other pages
             if (page !== 'loginPage' && !isLoggedIn) {
                 alert("Please log in first");
                 return;
             }
 
+            
+
+            // if the user is logged in and clicks on the login link, log them out
+            if (isLoggedIn && page === 'loginPage') {
+                isLoggedIn = false;
+
+                // show the login and registration forms
+
+                const loginPage = document.getElementById('loginPage');
+                const schedulePage = document.getElementById('schedulePage');
+                const mainContent = document.getElementById('mainContent');
+
+                loginPage.style.display = 'block';
+                schedulePage.style.display = 'none';
+                mainContent.style.display = 'none';
+
+                // change the content of the logout button to login
+                const navLogin = document.getElementById('navLogin');
+                navLogin.textContent = 'Login';
+
+                return;
+            }
+            
             const loginPage = document.getElementById('loginPage');
             const schedulePage = document.getElementById('schedulePage');
             const mainContent = document.getElementById('mainContent');
@@ -437,7 +479,12 @@
                     alert(data.error);
                 } else {
                     alert("Registration successful");
-                    // Redirect to another page or update UI
+                    
+
+                    // empty out the registration form
+                    document.getElementById('registerUsername').value = '';
+                    document.getElementById('registerEmail').value = '';
+                    document.getElementById('registerPassword').value = '';
                 }
             })
             .catch(error => {
