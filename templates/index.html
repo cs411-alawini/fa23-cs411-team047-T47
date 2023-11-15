@@ -139,10 +139,12 @@
         <div id="userCommentsDisplay">
             <!-- show all of the user's comments for each route-->
             <p><strong>route101:</strong> Great service on Route 101!</p>
+            <button id="updateComment">Update</button>
+            <button id="deleteComment">delete</button>
             <p><strong>route201:</strong> Bus was late today at Stop B.</p>
+            <button id="updateComment">Update</button>
+            <button id="deleteComment">delete</button>
         </div>
-        <button id="updateComment">Update</button>
-        <button id="deleteComment">delete</button>
     </div>
 
 
@@ -444,6 +446,7 @@
             document.getElementById('loginPage').style.display = (page === 'loginPage') ? 'block' : 'none';
             document.getElementById('schedulePage').style.display = (page === 'schedulePage') ? 'block' : 'none';
             document.getElementById('mainContent').style.display = (page === 'mainContent') ? 'block' : 'none';
+            document.getElementById('comment').style.display = (page === 'comment') ? 'block' : 'none';
         }
 
         // Event listeners for navigation links
