@@ -15,12 +15,12 @@
             <li><a id="navLogin">Login</a></li>
             <li><a id="navSchedule">Schedule</a></li>
             <li><a id="navMainContent">Map</a></li>
+            <li><a id="navComment">Comment</a></li>
         </ul>
     </nav>
 
-    <!-- Login Section -->
-    <form id="loginForm" method="post" action="/login">
-        <h2>Login</h2>
+    <div id="loginPage" style="display:block;">
+        <!-- <h2>Login</h2>
         <p>username
             <input type="text" id="loginUsername" name="username">
         </p>
@@ -28,21 +28,33 @@
         <p>password
             <input type="password" id="loginPassword" name="password">
         </p>
-        <button type="submit">Login</button>
-    </form>
-    <!-- <p> First stop: <span id = "test"> </span> </p> -->
+        <button type="submit">Login</button> -->
+        <!-- Login Section -->
+        <form id="loginForm" method="post" action="/login">
+            <h2>Login</h2>
+            <p>username
+                <input type="text" id="loginUsername" name="username">
+            </p>
 
-    <!-- Registration Section -->
-    <form id="registrationForm" method="post" action="/register">
-        <h2>Register</h2>
-        <p>username
-            <input type="text" id="registerUsername" name="username"></p>
-        <p>email 
-            <input type="email" id="registerEmail" name="email"></p>
-        <p>password
-            <input type="password" id="registerPassword" name="password"></p>
-        <button type="submit">Register</button>
-    </form>
+            <p>password
+                <input type="password" id="loginPassword" name="password">
+            </p>
+            <button type="submit">Login</button>
+        </form>
+        <!-- <p> First stop: <span id = "test"> </span> </p> -->
+
+        <!-- Registration Section -->
+        <form id="registrationForm" method="post" action="/register">
+            <h2>Register</h2>
+            <p>username
+                <input type="text" id="registerUsername" name="username"></p>
+            <p>email 
+                <input type="email" id="registerEmail" name="email"></p>
+            <p>password
+                <input type="password" id="registerPassword" name="password"></p>
+            <button type="submit">Register</button>
+        </form>
+    </div>
     
     <!-- Main Content Section -->
     <div id="mainContent" style="display:none;">
@@ -128,10 +140,19 @@
         </div>
     </div>
 
-    <!-- Navigation Buttons -->
-    <button id="showMainContentBtn" style="display:none;">Show Main Content</button>
-    <button id="showSchedulePageBtn" style="display:none;">Show Schedule Page</button>
-
+    <!-- Manage comment for each user -->
+    <div id="comment" style="display:none;">
+        <h2>Your Comments</h2>
+        <div id="userCommentsDisplay">
+            <!-- show all of the user's comments for each route-->
+            <p><strong>route101:</strong> Great service on Route 101!</p>
+            <button id="updateComment">Update</button>
+            <button id="deleteComment">delete</button>
+            <p><strong>route201:</strong> Bus was late today at Stop B.</p>
+            <button id="updateComment">Update</button>
+            <button id="deleteComment">delete</button>
+        </div>
+    </div>
 
     <script>
         // Custom map styles to hide default bus stops
@@ -372,10 +393,15 @@
 
                     // go into the main content
                     document.getElementById('mainContent').style.display = 'block';
-                    document.getElementById('showSchedulePageBtn').style.display = 'block';
-                    // hide the login and registration forms
-                    document.getElementById('loginForm').style.display = 'none';
-                    document.getElementById('registrationForm').style.display = 'none';
+                    document.getElementById('loginPage').style.display = 'none';
+
+                    // empty out the login form
+                    document.getElementById('loginUsername').value = '';
+                    document.getElementById('loginPassword').value = '';
+
+                    // change the content of the logout button to logout
+                    const navLogin = document.getElementById('navLogin');
+                    navLogin.textContent = 'Logout';
 
                 }
             })
@@ -391,22 +417,33 @@
             document.getElementById('loginPage').style.display = 'block';
             document.getElementById('schedulePage').style.display = 'none';
             document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('comment').style.display = 'none';
         });
 
         document.getElementById('navSchedule').addEventListener('click', function() {
             document.getElementById('loginPage').style.display = 'none';
             document.getElementById('schedulePage').style.display = 'block';
             document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('comment').style.display = 'none';
         });
 
         document.getElementById('navMainContent').addEventListener('click', function() {
             document.getElementById('loginPage').style.display = 'none';
             document.getElementById('schedulePage').style.display = 'none';
             document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('comment').style.display = 'none';
+        });
+        document.getElementById('navComment').addEventListener('click', function() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('schedulePage').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('comment').style.display = 'block';
         });
 
         // Function to handle navigation
         function navigateTo(page) {
+
+            // if the user is not logged in, do not allow them to navigate to other pages
             if (page !== 'loginPage' && !isLoggedIn) {
                 alert("Please log in first");
                 return;
@@ -415,12 +452,14 @@
             document.getElementById('loginPage').style.display = (page === 'loginPage') ? 'block' : 'none';
             document.getElementById('schedulePage').style.display = (page === 'schedulePage') ? 'block' : 'none';
             document.getElementById('mainContent').style.display = (page === 'mainContent') ? 'block' : 'none';
+            document.getElementById('comment').style.display = (page === 'comment') ? 'block' : 'none';
         }
 
         // Event listeners for navigation links
         document.getElementById('navLogin').addEventListener('click', () => navigateTo('loginPage'));
         document.getElementById('navSchedule').addEventListener('click', () => navigateTo('schedulePage'));
         document.getElementById('navMainContent').addEventListener('click', () => navigateTo('mainContent'));
+        document.getElementById('navComment').addEventListener('click', () => navigateTo('comment'));
         
 
         document.getElementById('submitComment').addEventListener('click', function() {
@@ -441,21 +480,6 @@
             document.getElementById('commentBox').value = '';
         });
 
-        document.getElementById('showSchedulePageBtn').addEventListener('click', function() {
-            document.getElementById('schedulePage').style.display = 'block';
-            document.getElementById('mainContent').style.display = 'none';
-            document.getElementById('showMainContentBtn').style.display = 'block';
-            document.getElementById('showSchedulePageBtn').style.display = 'none';
-            // Optionally, toggle button visibility if needed
-        });
-
-        document.getElementById('showMainContentBtn').addEventListener('click', function() {
-            document.getElementById('schedulePage').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'block';
-            document.getElementById('showMainContentBtn').style.display = 'none';
-            document.getElementById('showSchedulePageBtn').style.display = 'block';
-            // Optionally, toggle button visibility if needed
-        });
 
         // Handle Registration Form Submission
         document.getElementById('registrationForm').addEventListener('submit', function(event) {
@@ -477,7 +501,12 @@
                     alert(data.error);
                 } else {
                     alert("Registration successful");
-                    // Redirect to another page or update UI
+                    
+
+                    // empty out the registration form
+                    document.getElementById('registerUsername').value = '';
+                    document.getElementById('registerEmail').value = '';
+                    document.getElementById('registerPassword').value = '';
                 }
             })
             .catch(error => {
