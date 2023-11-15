@@ -61,6 +61,20 @@
         </form>
 
     </div>
+    <style>
+        table {
+            border-collapse: collapse;
+            border-spacing: 0;
+            width: 100%;
+            border: 1px solid #ddd;
+            font-weight: 100;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+            font-weight: 100;
+        }
+    </style>
 
     <!-- shedule page content -->
     <div id="schedulePage" style="display:none;">
@@ -68,12 +82,30 @@
         <div id="busSchedule">
             <!-- Example Bus Schedule Content -->
             <p>Route 101 - Main Street</p>
-            <ul>
-                <li>08:00 AM - Bus Stop A</li>
+            <div style="overflow-x:auto;">
+                <table>
+                    <tr>
+                        <th>Starting stop</th>
+                        <th>Bus Stop A</th>
+                        <th>Bus Stop B</th>
+                        <th>Bus Stop C</th>
+                        <th>Destination stop</th>
+                    </tr>
+                    <tr>
+                        <th>08:00 AM</th>
+                        <th>08:15 AM</th>
+                        <th>08:30 AM</th>
+                        <th>08:45 AM</th>
+                        <th>08:50 AM</th>
+                    </tr>
+                </table>
+            </div>
+            <!-- <ul> -->
+                <!-- <li>08:00 AM - Bus Stop A</li>
                 <li>08:15 AM - Bus Stop B</li>
-                <li>08:30 AM - Bus Stop C</li>
+                <li>08:30 AM - Bus Stop C</li> -->
                 <!-- Add more schedule items as needed -->
-            </ul>
+            <!-- </ul> -->
         </div>
     
         <h2>Comments</h2>
