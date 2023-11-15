@@ -82,8 +82,9 @@
         <div id="busSchedule">
             <!-- Example Bus Schedule Content -->
             <p>Route 101 - Main Street</p>
+            <button id = "showSchedule"></button>
             <div style="overflow-x:auto;">
-                <table>
+                <!-- <table>
                     <tr>
                         <th>Starting stop</th>
                         <th>Bus Stop A</th>
@@ -98,14 +99,20 @@
                         <th>08:45 AM</th>
                         <th>08:50 AM</th>
                     </tr>
+                </table> -->
+                <table border="1">
+                    <thead>
+                      <tr>
+                        <th>Starting stop</th>
+                        <th>Bus Stop A</th>
+                        <th>Bus Stop B</th>
+                        <th>Bus Stop C</th>
+                        <th>Destination stop</th>
+                      </tr>
+                    </thead>
+                    <tbody id="table-body"></tbody>
                 </table>
             </div>
-            <!-- <ul> -->
-                <!-- <li>08:00 AM - Bus Stop A</li>
-                <li>08:15 AM - Bus Stop B</li>
-                <li>08:30 AM - Bus Stop C</li> -->
-                <!-- Add more schedule items as needed -->
-            <!-- </ul> -->
         </div>
     
         <h2>Comments</h2>
@@ -126,7 +133,6 @@
     <button id="showSchedulePageBtn" style="display:none;">Show Schedule Page</button>
 
 
-
     <script>
         // Custom map styles to hide default bus stops
         const mapStyles = [
@@ -145,7 +151,6 @@
         let closeByStops = [];
         let closeByRoutes = [];
         let isLoggedIn = false; // Flag to track login status
-
 
         // clear the current routes and bus stops in the maps
         function clearMap() {
@@ -331,10 +336,11 @@
                 } 
                 else {
                     // closeByStops: 'id', 'name', 'coor'
-                    closeByStops = data.stopInfo;
+                    closeByStops = data[0].stopInfo;
                     // closeByRoutes: 'id', 'name'
-                    closeByRoutes = data.routeInfo;
+                    closeByRoutes = data[0].routeInfo;
                     // document.getElementById('test').textContent = closeByStops.name[0];
+                    console.log(closeByRoutes[0])
                 }
             })
             .catch(error => {
@@ -490,6 +496,47 @@
                 // Your existing code to place markers
             }
         }
+
+        //Create a the schedule table with given data
+        function generateTable(schedule){
+            const tableBody = document.getElementById('table-body');
+            // Loop through the JSON data and create table rows
+            schedule.forEach(item => {
+                const row = document.createElement('tr');
+
+                // Create table cells for each property
+                Object.keys(item).forEach(key => {
+                    const cell = document.createElement('td');
+                    cell.textContent = item[key];
+                    row.appendChild(cell);
+                });
+
+                // Append the row to the table body
+                tableBody.appendChild(row);
+            });
+        }
+
+        // test data
+        let data = [
+            {
+                stop1: "8:00",
+                stop2: "8:15",
+                stop3: "8:30",
+                stop4: "8:45",
+                stop5: "9:00"
+            },
+            {
+                stop1: "9:00",
+                stop2: "9:15",
+                stop3: "9:30",
+                stop4: "9:45",
+                stop5: "10:00"
+            }
+        ]
+        // just to test if schedule works -) later put into the fetch 
+        document.getElementById('showSchedule').addEventListener('click', function() {
+            generateTable(data);
+        });
 
 
     </script>
