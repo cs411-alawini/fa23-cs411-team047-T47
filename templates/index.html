@@ -19,6 +19,7 @@
         <input type="text" id="address" placeholder="Enter address" required>
         <button type="submit">Find Stops</button>
     </form>
+    <!-- <p> First stop: <span id = "test"> </span> </p> -->
 
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBS-S37L58YssF52HQocELjBEI4s1-NSiM&callback=initMap"></script>
 
@@ -36,6 +37,7 @@
         let allBusStopsData = []; // Array to store all bus stops data
         let shapes = [];
         let closeByStops = [];
+        let closeByRoutes = [];
 
         // clear the current routes and bus stops in the maps
         function clearMap() {
@@ -188,7 +190,6 @@
         }
 
 
-
         // Functions to control the loading bar
         function updateLoadingBar(percentage) {
             document.getElementById('loadingBar').style.width = percentage + '%';
@@ -221,8 +222,11 @@
                     alert(data.error);
                 } 
                 else {
-                    // data:'id', 'name', 'coor'
-                    closeByStops = data;
+                    // closeByStops: 'id', 'name', 'coor'
+                    closeByStops = data.stopInfo;
+                    // closeByRoutes: 'id', 'name'
+                    closeByRoutes = data.routeInfo;
+                    // document.getElementById('test').textContent = closeByStops.name[0];
                 }
             })
             .catch(error => {

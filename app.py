@@ -154,8 +154,11 @@ def get_bus_stops():
     # Check if the address in range of the city
     if valid_range(latitude, longitude):
         stops = get_close_by_stops(latitude, longitude)
+        routes = get_close_by_routes(latitude, longitude)
         stops_list = [{'id': row[0], 'name': row[1], 'coor': [row[2],row[3]]} for row in stops]
-        return jsonify(stops_list)
+        routes_list = [{'id': row[0], 'name': row[1]} for row in routes]
+        info_list = [{'stopInfo': stops_list, 'routeInfo': routes_list}]
+        return jsonify(info_list)
     else:
         return jsonify({'error': 'Not in the city'}), 400
     
