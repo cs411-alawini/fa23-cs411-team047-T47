@@ -121,11 +121,6 @@
         </div>
     </div>
 
-    <!-- Navigation Buttons -->
-    <button id="showMainContentBtn" style="display:none;">Show Main Content</button>
-    <button id="showSchedulePageBtn" style="display:none;">Show Schedule Page</button>
-
-
 
     <script>
         // Custom map styles to hide default bus stops
@@ -366,7 +361,6 @@
 
                     // go into the main content
                     document.getElementById('mainContent').style.display = 'block';
-                    document.getElementById('showSchedulePageBtn').style.display = 'block';
                     // hide the login and registration forms
                     document.getElementById('loginForm').style.display = 'none';
                     document.getElementById('registrationForm').style.display = 'none';
@@ -381,23 +375,6 @@
 
 
 
-        document.getElementById('navLogin').addEventListener('click', function() {
-            document.getElementById('loginPage').style.display = 'block';
-            document.getElementById('schedulePage').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'none';
-        });
-
-        document.getElementById('navSchedule').addEventListener('click', function() {
-            document.getElementById('loginPage').style.display = 'none';
-            document.getElementById('schedulePage').style.display = 'block';
-            document.getElementById('mainContent').style.display = 'none';
-        });
-
-        document.getElementById('navMainContent').addEventListener('click', function() {
-            document.getElementById('loginPage').style.display = 'none';
-            document.getElementById('schedulePage').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'block';
-        });
 
         // Function to handle navigation
         function navigateTo(page) {
@@ -406,9 +383,13 @@
                 return;
             }
 
-            document.getElementById('loginPage').style.display = (page === 'loginPage') ? 'block' : 'none';
-            document.getElementById('schedulePage').style.display = (page === 'schedulePage') ? 'block' : 'none';
-            document.getElementById('mainContent').style.display = (page === 'mainContent') ? 'block' : 'none';
+            const loginPage = document.getElementById('loginPage');
+            const schedulePage = document.getElementById('schedulePage');
+            const mainContent = document.getElementById('mainContent');
+
+            if (loginPage) loginPage.style.display = (page === 'loginPage') ? 'block' : 'none';
+            if (schedulePage) schedulePage.style.display = (page === 'schedulePage') ? 'block' : 'none';
+            if (mainContent) mainContent.style.display = (page === 'mainContent') ? 'block' : 'none';
         }
 
         // Event listeners for navigation links
@@ -435,21 +416,6 @@
             document.getElementById('commentBox').value = '';
         });
 
-        document.getElementById('showSchedulePageBtn').addEventListener('click', function() {
-            document.getElementById('schedulePage').style.display = 'block';
-            document.getElementById('mainContent').style.display = 'none';
-            document.getElementById('showMainContentBtn').style.display = 'block';
-            document.getElementById('showSchedulePageBtn').style.display = 'none';
-            // Optionally, toggle button visibility if needed
-        });
-
-        document.getElementById('showMainContentBtn').addEventListener('click', function() {
-            document.getElementById('schedulePage').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'block';
-            document.getElementById('showMainContentBtn').style.display = 'none';
-            document.getElementById('showSchedulePageBtn').style.display = 'block';
-            // Optionally, toggle button visibility if needed
-        });
 
         // Handle Registration Form Submission
         document.getElementById('registrationForm').addEventListener('submit', function(event) {
