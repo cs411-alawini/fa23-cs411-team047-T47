@@ -15,6 +15,7 @@
             <li><a id="navLogin">Login</a></li>
             <li><a id="navSchedule">Schedule</a></li>
             <li><a id="navMainContent">Map</a></li>
+            <li><a id="navComment">Comment</a></li>
         </ul>
     </nav>
 
@@ -86,6 +87,18 @@
                 <!-- Add more comments as examples or from user input -->
             </div>
         </div>
+    </div>
+
+    <!-- Manage comment for each user -->
+    <div id="comment" style="display:none;">
+        <h2>Your Comments</h2>
+        <div id="userCommentsDisplay">
+            <!-- show all of the user's comments for each route-->
+            <p><strong>route101:</strong> Great service on Route 101!</p>
+            <p><strong>route201:</strong> Bus was late today at Stop B.</p>
+        </div>
+        <button id="updateComment">Update</button>
+        <button id="deleteComment">delete</button>
     </div>
 
     <!-- Navigation Buttons -->
@@ -348,18 +361,28 @@
             document.getElementById('loginPage').style.display = 'block';
             document.getElementById('schedulePage').style.display = 'none';
             document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('comment').style.display = 'none';
         });
 
         document.getElementById('navSchedule').addEventListener('click', function() {
             document.getElementById('loginPage').style.display = 'none';
             document.getElementById('schedulePage').style.display = 'block';
             document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('comment').style.display = 'none';
         });
 
         document.getElementById('navMainContent').addEventListener('click', function() {
             document.getElementById('loginPage').style.display = 'none';
             document.getElementById('schedulePage').style.display = 'none';
             document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('comment').style.display = 'none';
+        });
+
+        document.getElementById('navComment').addEventListener('click', function() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('schedulePage').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('comment').style.display = 'block';
         });
 
         // Function to handle navigation
@@ -368,16 +391,18 @@
                 alert("Please log in first");
                 return;
             }
-
+            
             document.getElementById('loginPage').style.display = (page === 'loginPage') ? 'block' : 'none';
             document.getElementById('schedulePage').style.display = (page === 'schedulePage') ? 'block' : 'none';
             document.getElementById('mainContent').style.display = (page === 'mainContent') ? 'block' : 'none';
+            document.getElementById('comment').style.display = (page === 'comment') ? 'block' : 'none'; 
         }
 
         // Event listeners for navigation links
         document.getElementById('navLogin').addEventListener('click', () => navigateTo('loginPage'));
         document.getElementById('navSchedule').addEventListener('click', () => navigateTo('schedulePage'));
         document.getElementById('navMainContent').addEventListener('click', () => navigateTo('mainContent'));
+        document.getElementById('navComment').addEventListener('click', () => navigateTo('comment'));
         
 
         document.getElementById('submitComment').addEventListener('click', function() {
