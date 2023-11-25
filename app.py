@@ -106,15 +106,6 @@ def geocode_address():
     # or if you need to save this in the database, you can do so here.
     # return latitude and longtitude
 
-    # Check if the address in range of the city
-    if valid_range(latitude, longitude):
-        stops = get_close_by_stops(latitude, longitude)
-        points = [{'lat': row[2], 'lng': row[3]} for row in stops]
-        # stops_dic = {}
-        # stops_list = [{'id': row[0], 'name': row[1]} for row in stops]
-        for info in stops:
-            print(info)
-
     return jsonify({
         'latitude': latitude,
         'longitude': longitude
@@ -187,8 +178,8 @@ def test_db():
     except Exception as e:
         return jsonify({'error': f"Database connection failed using mysql.connector: {str(e)}"}), 500
 
-# get the lat and log for the closeby bus stops
-@app.route('/get_bus_stops', methods=['POST'])
+# get the closeby bus stop info and route info
+@app.route('/get_bus_stops_and_routes', methods=['POST'])
 def get_bus_stops():
     data = request.get_json()
     address = data.get('address')
@@ -215,7 +206,8 @@ def get_bus_stops():
     if valid_range(latitude, longitude):
         stops = get_close_by_stops(latitude, longitude)
         routes = get_close_by_routes(latitude, longitude)
-        stops_list = [{'id': row[0], 'name': row[1], 'coor': [row[2],row[3]]} for row in stops]
+        stops_list = [{'stop_name': row[1], 'stop_lat': row[2], 'stop_long': row[3]} for row in stops]
+        # stops_list = [{'id': row[0], 'stop_name': row[1], 'stop_lat': row[2], 'stop_long': row[3]} for row in stops]
         routes_list = [{'id': row[0], 'name': row[1]} for row in routes]
         info_list = [{'stopInfo': stops_list, 'routeInfo': routes_list}]
         return jsonify(info_list)

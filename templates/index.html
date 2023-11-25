@@ -123,7 +123,7 @@
                         <th>Destination stop</th>
                       </tr>
                     </thead>
-                    <tbody id="table-body"></tbody>
+                    <tbody id="schedule-body"></tbody>
                 </table>
             </div>
         </div>
@@ -295,8 +295,9 @@
                 .then(response => response.json())
                 .then(data => {
                     clearMap(); // You might need to create this function to clear existing routes and stops
-                    drawShapeOnMap(data.shape, data.route_id);
+                    // drawShapeOnMap(data.shape, data.route_id);
                     placeMarkers(data.stops);
+                    console.log(data.stops);
                 })
                 .catch(error => console.error('Error:', error));
         }
@@ -317,6 +318,12 @@
             fetchAndStoreData();
 
             onMapAndDataFullyLoaded();
+        }
+
+        function setNewCenter(newLat, newLng) {
+            var newCenter = new google.maps.LatLng(newLat, newLng);
+            map.setCenter(newCenter);
+            map.setZoom(16);
         }
 
         function onMapAndDataFullyLoaded() {
@@ -344,7 +351,8 @@
         document.getElementById('addressForm').addEventListener('submit', function(event) {
             event.preventDefault(); // to prevent the form from submitting traditionally
             const address = document.getElementById('address').value;
-            fetch('/get_bus_stops', {
+            let searchAddress = [];
+            fetch('/geocode', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -357,17 +365,50 @@
                     alert(data.error);
                 } 
                 else {
-                    // closeByStops: 'id', 'name', 'coor'
-                    closeByStops = data[0].stopInfo;
-                    // closeByRoutes: 'id', 'name'
-                    closeByRoutes = data[0].routeInfo;
-                    // document.getElementById('test').textContent = closeByStops.name[0];
-                    console.log(closeByRoutes[0])
+                    searchAddress = data;
+                    console.log(searchAddress);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
             });
+            fetch('/get_bus_stops_and_routes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ address: address }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } 
+                else {
+                    // closeByStops: 'id', 'stop_name', 'stop_lat', 'stop_lon'
+                    closeByStops = data[0].stopInfo;
+                    console.log(closeByStops)
+                    // closeByRoutes: 'id', 'name'
+                    closeByRoutes = data[0].routeInfo;
+                    clearMap();
+                    setNewCenter(searchAddress.latitude, searchAddress.longitude);
+                    placeMarkers(closeByStops);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+
+            // if (closeByStops.length != 0){
+            //     clearMap();
+            //     // setNewCenter(searchAddress.latitude, searchAddress.longitude);
+            //     map.setCenter(new google.maps.LatLng(searchAddress.latitude, searchAddress.longitude));
+            //     map.setZoom(16);
+            //     placeMarkers(closeByStops);
+            //     console.log("processed");
+            // }
+            // closeByStops = [];
+            // closeByRoutes = [];
         });
 
         // Handle Login Form Submission
@@ -529,7 +570,7 @@
 
         //Create a the schedule table with given data
         function generateTable(schedule){
-            const tableBody = document.getElementById('table-body');
+            const tableBody = document.getElementById('schedule-body');
             // Loop through the JSON data and create table rows
             schedule.forEach(item => {
                 const row = document.createElement('tr');
