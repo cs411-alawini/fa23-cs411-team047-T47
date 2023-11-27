@@ -65,6 +65,13 @@
             <div id="loadingBar"></div>
         </div>
 
+        <div style="overflow-x:auto;"> 
+            <table border="1">
+
+                <tbody id="close-by-routes"></tbody>
+            </table>
+        </div>
+
         <button id="resetMapButton">Reset Map</button>
         
         <form id="addressForm">
@@ -201,6 +208,13 @@
         document.getElementById('resetMapButton').addEventListener('click', function() {
             clearMap();
             redrawStoredData();
+
+            // Check if there is an existing table and remove it
+            const tableBody = document.getElementById('close-by-routes');
+
+            if (tableBody.firstChild) {
+                tableBody.removeChild(tableBody.firstChild);
+            }
         });
         
         
@@ -295,7 +309,7 @@
                 .then(response => response.json())
                 .then(data => {
                     clearMap(); // You might need to create this function to clear existing routes and stops
-                    // drawShapeOnMap(data.shape, data.route_id);
+                    drawShapeOnMap(data.shape, data.route_id);
                     placeMarkers(data.stops);
                     console.log(data.stops);
                 })
@@ -385,30 +399,21 @@
                     alert(data.error);
                 } 
                 else {
-                    // closeByStops: 'id', 'stop_name', 'stop_lat', 'stop_lon'
+                    // closeByStops: 'stop_name', 'stop_lat', 'stop_lon'
                     closeByStops = data[0].stopInfo;
                     console.log(closeByStops)
-                    // closeByRoutes: 'id', 'name'
+                    // closeByRoutes: 'id'
                     closeByRoutes = data[0].routeInfo;
+                    console.log(closeByRoutes);
                     clearMap();
                     setNewCenter(searchAddress.latitude, searchAddress.longitude);
                     placeMarkers(closeByStops);
+                    generateTable(closeByRoutes);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
             });
-
-            // if (closeByStops.length != 0){
-            //     clearMap();
-            //     // setNewCenter(searchAddress.latitude, searchAddress.longitude);
-            //     map.setCenter(new google.maps.LatLng(searchAddress.latitude, searchAddress.longitude));
-            //     map.setZoom(16);
-            //     placeMarkers(closeByStops);
-            //     console.log("processed");
-            // }
-            // closeByStops = [];
-            // closeByRoutes = [];
         });
 
         // Handle Login Form Submission
@@ -569,8 +574,13 @@
         }
 
         //Create a the schedule table with given data
-        function generateTable(schedule){
+        function generateSchedule(schedule){
+            // Check if there is an existing table and remove it
             const tableBody = document.getElementById('schedule-body');
+
+            if (tableBody.firstChild) {
+                tableBody.removeChild(tableBody.firstChild);
+            }
             // Loop through the JSON data and create table rows
             schedule.forEach(item => {
                 const row = document.createElement('tr');
@@ -586,6 +596,7 @@
                 tableBody.appendChild(row);
             });
         }
+
 
         // test data
         let data = [
@@ -606,8 +617,38 @@
         ]
         // just to test if schedule works -) later put into the fetch 
         document.getElementById('showSchedule').addEventListener('click', function() {
-            generateTable(data);
+            generateSchedule(data);
         });
+
+        // Generate the table of close-by routes
+        function generateTable(dataList) {
+
+            // Check if there is an existing table and remove it
+            const tableBody = document.getElementById('close-by-routes');
+
+            if (tableBody.firstChild) {
+                tableBody.removeChild(tableBody.firstChild);
+            }
+
+            const row = document.createElement('tr');
+
+            // Create a text node for the label
+            const labelTextNode = document.createTextNode("Close-by Routes:");
+            const title = document.createElement('td');
+            title.textContent = labelTextNode;
+            row.appendChild(labelTextNode);
+
+            // Loop through the list of routes and create table cells for each one
+            dataList.forEach(item => {
+                // Create table cells for each property
+                Object.keys(item).forEach(key => {
+                    const cell = document.createElement('td');
+                    cell.textContent = item[key];
+                    row.appendChild(cell);
+                });
+            });
+            tableBody.appendChild(row);
+        }
 
 
     </script>

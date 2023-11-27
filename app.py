@@ -201,6 +201,7 @@ def get_bus_stops():
     location = geocoding_data['results'][0]['geometry']['location']
     latitude = location['lat']
     longitude = location['lng']
+    print(longitude)
 
     # Check if the address in range of the city
     if valid_range(latitude, longitude):
@@ -208,7 +209,8 @@ def get_bus_stops():
         routes = get_close_by_routes(latitude, longitude)
         stops_list = [{'stop_name': row[1], 'stop_lat': row[2], 'stop_long': row[3]} for row in stops]
         # stops_list = [{'id': row[0], 'stop_name': row[1], 'stop_lat': row[2], 'stop_long': row[3]} for row in stops]
-        routes_list = [{'id': row[0], 'name': row[1]} for row in routes]
+        routes_list = [{'id': row[0]} for row in routes]
+        # routes_list = [{'id': row[0], 'name': row[1]} for row in routes]
         info_list = [{'stopInfo': stops_list, 'routeInfo': routes_list}]
         return jsonify(info_list)
     else:
