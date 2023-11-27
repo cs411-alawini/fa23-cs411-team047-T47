@@ -1,8 +1,9 @@
-from flask import Flask, request, jsonify, render_template, request, redirect, url_for, session, flash
+from flask import Flask, request, jsonify, render_template, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 # from flask_cors import CORS
 
+import json
 import requests
 import mysql.connector
 from ConnectionDB import *
@@ -54,7 +55,7 @@ class Arrival(db.Model):
     arrival_time = db.Column(db.String(10))
     stop_sequence = db.Column(db.Integer)
 
-# favorites modelZ
+# favorites model
 class Favorites(db.Model):
     __tablename__ = 'Favorites'
     favorites_id = db.Column(db.Integer, primary_key=True)
@@ -69,7 +70,34 @@ class User(db.Model):
     password = db.Column(db.String(17), nullable=False)
     favorites_id = db.Column(db.Integer, db.ForeignKey('Favorites.favorites_id'), nullable=True)
 
+# Route model
+class Route(db.Model):
+    __tablename__ = 'Route'
+    route_id = db.Column(db.String(9), primary_key=True)
+    route_long_name = db.Column(db.String(256), nullable=True)
+    route_color = db.Column(db.String(30), nullable=True)
+    route_text_color = db.Column(db.String(30), nullable=True)
+    fair_id = db.Column(db.String(21), nullable=False)
 
+# Fares model
+class Fares(db.Model):
+    __tablename__ = 'Fares'
+    fare_id = db.Column(db.String(23), primary_key=True)
+    price = db.Column(db.Float, nullable=True)
+    currency_type = db.Column(db.String(5), nullable=True)
+    payment_method = db.Column(db.Integer, nullable=True)
+    transfers = db.Column(db.String(3), nullable=True)
+    transfer_duration = db.Column(db.Integer, nullable=True)
+
+# Comment model
+class Comment(db.Model):
+    __tablename__ = 'Comment'
+    email = db.Column(db.String(42), primary_key=True)
+    route_id = db.Column(db.String(9), primary_key=True)
+    crowdedness = db.Column(db.Text, nullable=True)
+    safety = db.Column(db.Text, nullable=True)
+    temperature = db.Column(db.Text, nullable=True)
+    accessibility = db.Column(db.Text, nullable=True)
 
 # Geocoding API setup
 GEOCODING_API_URL = 'https://maps.googleapis.com/maps/api/geocode/json'
@@ -106,6 +134,15 @@ def geocode_address():
     # or if you need to save this in the database, you can do so here.
     # return latitude and longtitude
 
+    # Check if the address in range of the city
+    if valid_range(latitude, longitude):
+        stops = get_close_by_stops(latitude, longitude)
+        points = [{'lat': row[2], 'lng': row[3]} for row in stops]
+        # stops_dic = {}
+        # stops_list = [{'id': row[0], 'name': row[1]} for row in stops]
+        for info in stops:
+            print(info)
+
     return jsonify({
         'latitude': latitude,
         'longitude': longitude
@@ -122,33 +159,45 @@ def index():
 # register function
 @app.route('/register', methods=['POST'])
 def register():
-    print("hello")
     data = request.get_json()
-    print(data)
-    existing_user = User.query.filter_by(email=data['email']).limit(1).all()
-    # write a query to check if the username already exists
-    existing_username = User.query.filter_by(username=data['username']).limit(1).all()
-          
-    if existing_user:
-        return jsonify({"error": "Email already in use"}), 400
-
-    new_user = User(email=data['email'], username=data['username'])
-    new_user.password = (data['password'])
-    db.session.add(new_user)
-    db.session.commit()
-    return jsonify({"message": "Registration successful"}), 201
+    check_user_query = text("SELECT * FROM User WHERE email = :email OR username = :username LIMIT 1")
+    insert_user_query = text("""
+        INSERT INTO User (email, username, password) 
+        VALUES (:email, :username, :password)
+    """)
+    try:
+        with db.engine.connect() as connection:
+            existing_user = connection.execute(check_user_query, {'email': data['email'], 'username': data['username']}).first()
+            if existing_user:
+                return jsonify({"error": "Email or username already in use"}), 400
+            
+            connection.execute(insert_user_query, {
+                'email': data['email'], 
+                'username': data['username'], 
+                'password': data['password']
+            })
+            connection.commit()
+            return jsonify({"message": "Registration successful"}), 201
+    except Exception as e:
+        app.logger.error(f"Error in register: {e}")
+        return jsonify({'error': 'Database operation failed'}), 500
+    
 
 # login function
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    user = User.query.filter_by(username=data['username']).first()
-    if user and user.password == (data['password']):
-        # Login successful
-        return jsonify({"message": "Login successful"}), 200
-    else:
-        # Login failed
-        return jsonify({"error": "Invalid username or password"}), 401
+    sql_query = text("SELECT * FROM User WHERE username = :username")
+    try:
+        with db.engine.connect() as connection:
+            user = connection.execute(sql_query, {'username': data['username']}).first()
+            if user and user.password == data['password']:
+                return jsonify({"message": "Login successful", "email": user.email}), 200
+            else:
+                return jsonify({"error": "Invalid username or password"}), 401
+    except Exception as e:
+        app.logger.error(f"Error in login: {e}")
+        return jsonify({'error': 'Database operation failed'}), 500
 
 # logout function
 @app.route('/logout')
@@ -216,41 +265,191 @@ def get_bus_stops():
     else:
         return jsonify({'error': 'Not in the city'}), 400
     
+
 # get the route_id and shape to populate the whole routes on the maps
 @app.route('/get_route_shapes')
 def get_route_shapes():
     try:
-        shapes = {}
-        shape_ids = [trip.shape_id for trip in Trips.query.all()]
-        
-        # Get all the points for each shape_id from the Shape table that matches the shape_id from the Trips table
-        for shape_id in shape_ids:
-            shape_points = Shape.query.filter_by(shape_id=shape_id).order_by(Shape.shape_pt_sequence).all()
-            shapes[shape_id] = [{'lat': point.shape_pt_lat, 'lng': point.shape_pt_lon, 'sequence': point.shape_pt_sequence} for point in shape_points]
-
-        # Convert a dictionary with (shape_id as key and all its points as values) to a list to serialize as JSON
-        shapes_list = [{'shape_id': shape_id, 'points': points} for shape_id, points in shapes.items()]
-
-        return jsonify(shapes_list)
-    
+        with db.engine.connect() as connection:
+            # Get distinct shape_ids from the Trips table
+            shape_ids_query = text("SELECT DISTINCT shape_id FROM Trips")
+            shape_ids = connection.execute(shape_ids_query).fetchall()
+            
+            shapes = {}
+            for shape_id_record in shape_ids:
+                shape_id = shape_id_record.shape_id
+                shape_points_query = text("""
+                    SELECT shape_pt_lat, shape_pt_lon, shape_pt_sequence 
+                    FROM Shape 
+                    WHERE shape_id = :shape_id 
+                    ORDER BY shape_pt_sequence
+                """)
+                shape_points = connection.execute(shape_points_query, {'shape_id': shape_id}).fetchall()
+                shapes[shape_id] = [{'lat': point.shape_pt_lat, 'lng': point.shape_pt_lon, 'sequence': point.shape_pt_sequence} for point in shape_points]
+            
+            shapes_list = [{'shape_id': shape_id, 'points': points} for shape_id, points in shapes.items()]
+            return jsonify(shapes_list)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        app.logger.error(f"Error in get_route_shapes: {e}")
+        return jsonify({'error': 'Database operation failed'}), 500
+
+
 
 # get the route_id and shape to populate the route
 @app.route('/get_route_and_stops')
 def get_route_and_stops():
     shape_id = request.args.get('shape_id')
+    shape_query = text("SELECT * FROM Shape WHERE shape_id = :shape_id ORDER BY shape_pt_sequence")
+    stops_query = text("""
+        SELECT Bus_stops.stop_name, Bus_stops.stop_lat, Bus_stops.stop_lon 
+        FROM Bus_stops 
+        JOIN Arrival ON Bus_stops.stop_id = Arrival.stop_id 
+        JOIN Trips ON Arrival.trip_id = Trips.trip_id 
+        WHERE Trips.shape_id = :shape_id
+    """)
+    try:
+        with db.engine.connect() as connection:
+            route_shape = connection.execute(shape_query, {'shape_id': shape_id}).fetchall()
+            shape_points = [{'lat': point.shape_pt_lat, 'lng': point.shape_pt_lon} for point in route_shape]
+            
+            bus_stops = connection.execute(stops_query, {'shape_id': shape_id}).fetchall()
+            stops = [{'stop_name': stop.stop_name, 'stop_lat': stop.stop_lat, 'stop_lon': stop.stop_lon} for stop in bus_stops]
+            
+            return jsonify({'route_id': shape_id, 'shape': shape_points, 'stops': stops})
+    except Exception as e:
+        app.logger.error(f"Error in get_route_and_stops: {e}")
+        return jsonify({'error': 'Database operation failed'}), 500
+    
 
-    print(shape_id)
-    route_shape = Shape.query.filter(Shape.shape_id == shape_id).order_by(Shape.shape_pt_sequence).all()
-    shape_points = [{'lat': point.shape_pt_lat, 'lng': point.shape_pt_lon} for point in route_shape]
+# get route info
+@app.route('/get_route_info', methods=['GET'])
+def get_route_info():
+    route_id = request.args.get('route_id')
 
-    # Get the stops for the route
-    bus_stops = BusStop.query.join(Arrival, BusStop.stop_id == Arrival.stop_id).join(Trips, Arrival.trip_id == Trips.trip_id).filter(Trips.shape_id == shape_id).all()
-    stops = [{'stop_name': stop.stop_name, 'stop_lat': stop.stop_lat, 'stop_lon': stop.stop_lon} for stop in bus_stops]
+    # Construct the SQL query
+    sql_query = text("""
+        SELECT Route.route_id, Route.route_long_name, Fares.price 
+        FROM Route 
+        JOIN Fares ON Route.fare_id = Fares.fare_id 
+        WHERE Route.route_id = :route_id;
+    """)
+
+    # Execute the query
+    try:
+        with db.engine.connect() as connection:
+            result = connection.execute(sql_query, {'route_id': route_id}).first()
+            if result:
+                return jsonify({
+                    'route_id': result.route_id, 
+                    'route_long_name': result.route_long_name, 
+                    'price': result.price
+                })
+            else:
+                return jsonify({'error': 'Route not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+# comment functions
+@app.route('/get_comments', methods=['GET'])
+def get_comments():
+    route_id = request.args.get('route_id')
+    comments_query = text("""
+        SELECT email, crowdedness, safety, temperature, accessibility 
+        FROM Comment 
+        WHERE route_id = :route_id
+    """)
+    try:
+        with db.engine.connect() as connection:
+            comments = connection.execute(comments_query, {'route_id': route_id}).fetchall()
+            comments_data = [
+                {
+                    'email': c.email, 
+                    'crowdedness': c.crowdedness, 
+                    'safety': c.safety, 
+                    'temperature': c.temperature, 
+                    'accessibility': c.accessibility
+                } for c in comments
+            ]
+            return jsonify(comments_data)
+    except Exception as e:
+        app.logger.error(f"Error in get_comments: {e}")
+        return jsonify({'error': 'Database operation failed'}), 500
 
 
-    return jsonify({'route_id': shape_id, 'shape': shape_points, 'stops': stops})
+@app.route('/post_comment', methods=['POST'])
+def post_comment():
+    data = request.get_json()
+
+    # Check for required fields
+    if 'email' not in data or 'route_id' not in data:
+        return jsonify({'error': 'Missing email or route_id'}), 400
+
+    email = data['email']
+    route_id = data['route_id']
+    crowdedness = json.dumps([data.get('crowdedness', '')])  # Default to empty list serialized
+    safety = json.dumps([data.get('safety', '')])  # Same for safety
+    temperature = json.dumps([data.get('temperature', '')])
+    accessibility = json.dumps([data.get('accessibility', '')])
+
+    # Connect to the database
+    try:
+        with db.engine.connect() as connection:
+            # Check for existing comment
+            check_comment_query = text("SELECT * FROM Comment WHERE email = :email AND route_id = :route_id")
+            existing_comment = connection.execute(check_comment_query, {'email': email, 'route_id': route_id}).first()
+
+
+            # If a comment exists, append new data to it
+            if existing_comment:
+                existing_crowdedness = json.loads(existing_comment.crowdedness) if existing_comment.crowdedness else []
+                existing_safety = json.loads(existing_comment.safety) if existing_comment.safety else []
+                existing_temperature = json.loads(existing_comment.temperature) if existing_comment.temperature else []
+                existing_accessibility = json.loads(existing_comment.accessibility) if existing_comment.accessibility else []
+
+                if 'crowdedness' in data and data['crowdedness'].strip():
+                    existing_crowdedness.append(data['crowdedness'])
+                if 'safety' in data and data['safety'].strip():
+                    existing_safety.append(data['safety'])
+                if 'temperature' in data and data['temperature'].strip():
+                    existing_temperature.append(data['temperature'])
+                if 'accessibility' in data and data['accessibility'].strip():
+                    existing_accessibility.append(data['accessibility'])
+
+                crowdedness = json.dumps(existing_crowdedness)
+                safety = json.dumps(existing_safety)
+                temperature = json.dumps(existing_temperature)
+                accessibility = json.dumps(existing_accessibility)
+
+
+            # Upsert comment data
+            upsert_comment_query = text("""
+                INSERT INTO Comment (email, route_id, crowdedness, safety, temperature, accessibility)
+                VALUES (:email, :route_id, :crowdedness, :safety, :temperature, :accessibility)
+                ON DUPLICATE KEY UPDATE
+                crowdedness = VALUES(crowdedness),
+                safety = VALUES(safety),
+                temperature = VALUES(temperature),
+                accessibility = VALUES(accessibility)
+            """)
+            connection.execute(upsert_comment_query, {
+                'email': email, 
+                'route_id': route_id, 
+                'crowdedness': crowdedness, 
+                'safety': safety, 
+                'temperature': temperature, 
+                'accessibility': accessibility
+            })
+
+            connection.commit()
+
+    except Exception as e:
+        # Log the exception for debugging
+        app.logger.error(f"Error in post_comment: {e}")
+        return jsonify({'error': 'Database operation failed'}), 500
+
+    return jsonify({'message': 'Comment added or updated successfully'}), 201
+
 
 
 

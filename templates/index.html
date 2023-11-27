@@ -1,663 +1,806 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bus Schedule App with Map</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Bus Schedule App with Map</title>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
+    </head>
 
-<body>
+    <body>
 
-    <!-- Navigation Bar -->
-    <nav>
-        <ul>
-            <li><a id="navLogin">Login</a></li>
-            <li><a id="navSchedule">Schedule</a></li>
-            <li><a id="navMainContent">Map</a></li>
-            <li><a id="navComment">Comment</a></li>
-        </ul>
-    </nav>
+        <!-- Navigation Bar -->
+        <nav>
+            <ul>
+                <li><a id="navLogin">Login</a></li>
+                <li><a id="navSchedule">Schedule</a></li>
+                <li><a id="navMainContent">Map</a></li>
+                <li><a id="navComment">Comment</a></li>
+            </ul>
+        </nav>
 
-    <div id="loginPage" style="display:block;">
-        <!-- <h2>Login</h2>
-        <p>username
-            <input type="text" id="loginUsername" name="username">
-        </p>
+        <!-- Login and Registration Section -->
+        <div id="loginPage" style="display:block;">
+            <!-- Login Section -->
+            <form id="loginForm" method="post" action="/login">
+                <h2>Login</h2>
+                <p>username
+                    <input type="text" id="loginUsername" name="username">
+                </p>
 
-        <p>password
-            <input type="password" id="loginPassword" name="password">
-        </p>
-        <button type="submit">Login</button> -->
-        <!-- Login Section -->
-        <form id="loginForm" method="post" action="/login">
-            <h2>Login</h2>
-            <p>username
-                <input type="text" id="loginUsername" name="username">
-            </p>
+                <p>password
+                    <input type="password" id="loginPassword" name="password">
+                </p>
+                <button type="submit">Login</button>
+            </form>
 
-            <p>password
-                <input type="password" id="loginPassword" name="password">
-            </p>
-            <button type="submit">Login</button>
-        </form>
-        <!-- <p> First stop: <span id = "test"> </span> </p> -->
-
-        <!-- Registration Section -->
-        <form id="registrationForm" method="post" action="/register">
-            <h2>Register</h2>
-            <p>username
-                <input type="text" id="registerUsername" name="username"></p>
-            <p>email 
-                <input type="email" id="registerEmail" name="email"></p>
-            <p>password
-                <input type="password" id="registerPassword" name="password"></p>
-            <button type="submit">Register</button>
-        </form>
-    </div>
-    
-    <!-- Main Content Section -->
-    <div id="mainContent" style="display:none;">
-        <h1>Bus Schedule App with Map</h1>
-        
-        <div id="map"></div>
-        <div id="loadingBarContainer">
-            <div id="loadingBar"></div>
+            <!-- Registration Section -->
+            <form id="registrationForm" method="post" action="/register">
+                <h2>Register</h2>
+                <p>username
+                    <input type="text" id="registerUsername" name="username"></p>
+                <p>email 
+                    <input type="email" id="registerEmail" name="email"></p>
+                <p>password
+                    <input type="password" id="registerPassword" name="password"></p>
+                <button type="submit">Register</button>
+            </form>
         </div>
-
-        <div style="overflow-x:auto;"> 
-            <table border="1">
-
-                <tbody id="close-by-routes"></tbody>
-            </table>
-        </div>
-
-        <button id="resetMapButton">Reset Map</button>
         
-        <form id="addressForm">
-            <input type="text" id="address" placeholder="Enter address" required>
-            <button type="submit">Find Stops</button>
-        </form>
+        <!-- Main Content Section -->
+        <div id="mainContent" style="display:none;">
+            <h1>Bus Schedule App with Map</h1>
+            
+            <div id="map"></div>
+            <div id="loadingBarContainer">
+                <div id="loadingBar"></div>
+            </div>
 
-    </div>
-    <style>
-        table {
-            border-collapse: collapse;
-            border-spacing: 0;
-            width: 100%;
-            border: 1px solid #ddd;
-            font-weight: 100;
-        }
-        th, td {
-            text-align: left;
-            padding: 8px;
-            font-weight: 100;
-        }
-    </style>
-
-    <!-- shedule page content -->
-    <div id="schedulePage" style="display:none;">
-        <h2>Bus Schedule</h2>
-        <div id="busSchedule">
-            <!-- Example Bus Schedule Content -->
-            <p>Route 101 - Main Street</p>
-            <!-- Button for test case -->
-            <button id = "showSchedule"></button>
-            <div style="overflow-x:auto;">
-                <!-- <table>
-                    <tr>
-                        <th>Starting stop</th>
-                        <th>Bus Stop A</th>
-                        <th>Bus Stop B</th>
-                        <th>Bus Stop C</th>
-                        <th>Destination stop</th>
-                    </tr>
-                    <tr>
-                        <th>08:00 AM</th>
-                        <th>08:15 AM</th>
-                        <th>08:30 AM</th>
-                        <th>08:45 AM</th>
-                        <th>08:50 AM</th>
-                    </tr>
-                </table> -->
+            <div style="overflow-x:auto;"> 
                 <table border="1">
-                    <thead>
-                      <tr>
-                        <th>Starting stop</th>
-                        <th>Bus Stop A</th>
-                        <th>Bus Stop B</th>
-                        <th>Bus Stop C</th>
-                        <th>Destination stop</th>
-                      </tr>
-                    </thead>
-                    <tbody id="schedule-body"></tbody>
+
+                    <tbody id="close-by-routes"></tbody>
                 </table>
             </div>
+
+            <button id="resetMapButton">Reset Map</button>
+            
+            <form id="addressForm">
+                <input type="text" id="address" placeholder="Enter address" required>
+                <button type="submit">Find Stops</button>
+            </form>
         </div>
-    
-        <h2>Comments</h2>
-        <div id="commentsSection">
-            <textarea id="commentBox" placeholder="Leave a comment"></textarea>
-            <button id="submitComment">Post Comment</button>
-            <div id="commentsDisplay">
-                <!-- Comments will be displayed here -->
-                <p><strong>User1:</strong> Great service on Route 101!</p>
-                <p><strong>User2:</strong> Bus was late today at Stop B.</p>
-                <!-- Add more comments as examples or from user input -->
+
+        <style>
+            table {
+                border-collapse: collapse;
+                border-spacing: 0;
+                width: 100%;
+                border: 1px solid #ddd;
+                font-weight: 100;
+            }
+            th, td {
+                text-align: left;
+                padding: 8px;
+                font-weight: 100;
+            }
+        </style>
+
+        <!-- shedule page content -->
+        <div id="schedulePage" style="display:none;">
+            <h2>Bus Schedule</h2>
+            <div id="busSchedule">
+                <!-- Example Bus Schedule Content -->
+                <p>Route 101 - Main Street</p>
+                <!-- Button for test case -->
+                <button id = "showSchedule"></button>
+                <div style="overflow-x:auto;">
+                    <!-- <table>
+                        <tr>
+                            <th>Starting stop</th>
+                            <th>Bus Stop A</th>
+                            <th>Bus Stop B</th>
+                            <th>Bus Stop C</th>
+                            <th>Destination stop</th>
+                        </tr>
+                        <tr>
+                            <th>08:00 AM</th>
+                            <th>08:15 AM</th>
+                            <th>08:30 AM</th>
+                            <th>08:45 AM</th>
+                            <th>08:50 AM</th>
+                        </tr>
+                    </table> -->
+                    <table border="1">
+                        <thead>
+                        <tr>
+                            <th>Starting stop</th>
+                            <th>Bus Stop A</th>
+                            <th>Bus Stop B</th>
+                            <th>Bus Stop C</th>
+                            <th>Destination stop</th>
+                        </tr>
+                        </thead>
+                        <tbody id="schedule-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+        
+            <!-- Route Information Section -->
+            <div id="routeInfoSection" style="display:block;">
+                <h2>Route Information</h2>
+                <table id="routeInfoTable">
+                    <tr>
+                        <th>Route ID</th>
+                        <th>Route Name</th>
+                        <th>Fare</th>
+                    </tr>
+                    <!-- Route information rows will be added here -->
+                </table>
+            </div>
+
+
+
+
+            <!-- Comments Section for Different Categories -->
+            <div id="commentsSection" style="display:block;">
+                <h2>Comments</h2>
+                <div id="commentTypes">
+
+                    <!-- Each subsection for different comment types -->
+                    <div id="crowdednessComments" class="commentSubSection">
+                        <h3>Crowdedness</h3>
+                        <div class="commentsDisplay"></div>
+                        <textarea class="commentBox" placeholder="Leave a comment on crowdedness"></textarea>
+                        <button class="submitComment" data-type="crowdedness">Post Comment</button>
+                    </div>
+                    
+                    <div id="safetyComments" class="commentSubSection">
+                        <h3>safety</h3>
+                        <div class="commentsDisplay"></div>
+                        <textarea class="commentBox" placeholder="Leave a comment on safety"></textarea>
+                        <button class="submitComment" data-type="safety">Post Comment</button>
+                    </div>
+
+                    <div id="temperatureComments" class="commentSubSection">
+                        <h3>temperature</h3>
+                        <div class="commentsDisplay"></div>
+                        <textarea class="commentBox" placeholder="Leave a comment on temperature"></textarea>
+                        <button class="submitComment" data-type="temperature">Post Comment</button>
+                    </div>
+
+                    <div id="accessibilityComments" class="commentSubSection">
+                        <h3>accessibility</h3>
+                        <div class="commentsDisplay"></div>
+                        <textarea class="commentBox" placeholder="Leave a comment on accessibility"></textarea>
+                        <button class="submitComment" data-type="accessibility">Post Comment</button>
+                    </div>
+                    
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Manage comment for each user -->
+        <div id="comment" style="display:none;">
+            <h2>Your Comments</h2>
+            <div id="userCommentsDisplay">
+                <!-- show all of the user's comments for each route-->
+                <p><strong>route101:</strong> Great service on Route 101!</p>
+                <button id="updateComment">Update</button>
+                <button id="deleteComment">delete</button>
+                <p><strong>route201:</strong> Bus was late today at Stop B.</p>
+                <button id="updateComment">Update</button>
+                <button id="deleteComment">delete</button>
             </div>
         </div>
-    </div>
 
-    <!-- Manage comment for each user -->
-    <div id="comment" style="display:none;">
-        <h2>Your Comments</h2>
-        <div id="userCommentsDisplay">
-            <!-- show all of the user's comments for each route-->
-            <p><strong>route101:</strong> Great service on Route 101!</p>
-            <button id="updateComment">Update</button>
-            <button id="deleteComment">delete</button>
-            <p><strong>route201:</strong> Bus was late today at Stop B.</p>
-            <button id="updateComment">Update</button>
-            <button id="deleteComment">delete</button>
-        </div>
-    </div>
 
-    <script>
-        // Custom map styles to hide default bus stops
-        const mapStyles = [
-            {
-                // featureType: "transit.station.bus",
-                // stylers: [{ visibility: "off" }]
-                featureType: "transit",
-                stylers: [{ visibility: "off" }]
-            }
-        ];
+        <script>
+            // Custom map styles to hide default bus stops
+            const mapStyles = [
+                {
+                    // featureType: "transit.station.bus",
+                    // stylers: [{ visibility: "off" }]
+                    featureType: "transit",
+                    stylers: [{ visibility: "off" }]
+                }
+            ];
 
-        let map;
-        let allRoutesData = []; // Array to store all routes data
-        let allBusStopsData = []; // Array to store all bus stops data
-        let shapes = [];
-        let closeByStops = [];
-        let closeByRoutes = [];
-        let isLoggedIn = false; // Flag to track login status
+            let map;
+            let allRoutesData = []; // Array to store all routes data
+            let allBusStopsData = []; // Array to store all bus stops data
+            let shapes = [];
+            let closeByStops = [];
+            let closeByRoutes = [];
+            let isLoggedIn = false; // Flag to track login status
+            let userEmail = ''; // Global variable to store the user's email
 
-        // clear the current routes and bus stops in the maps
-        function clearMap() {
-            // Clear all markers
-            for (let marker of allBusStopsData) {
-                marker.setMap(null);
+
+            // clear the current routes and bus stops in the maps
+            function clearMap() {
+                // Clear all markers
+                for (let marker of allBusStopsData) {
+                    marker.setMap(null);
+                }
+
+                allBusStopsData = []; // Reset the array
+
+                // Clear all shapes
+                for (let shape of shapes) {
+                    shape.setMap(null);
+                }
+
+                shapes = []; // Reset the shapes array
             }
 
-            allBusStopsData = []; // Reset the array
-
-            // Clear all shapes
-            for (let shape of shapes) {
-                shape.setMap(null);
-            }
-
-            shapes = []; // Reset the shapes array
-        }
-
-        function redrawStoredData() {
-            // Redraw all routes using stored data
-            allRoutesData.forEach(shape => {
-                drawShapeOnMap(shape.points, shape.shape_id);
-            });
-        }
-
-        document.getElementById('resetMapButton').addEventListener('click', function() {
-            clearMap();
-            redrawStoredData();
-
-            // Check if there is an existing table and remove it
-            const tableBody = document.getElementById('close-by-routes');
-
-            if (tableBody.firstChild) {
-                tableBody.removeChild(tableBody.firstChild);
-            }
-        });
-        
-        
-        // mark the bus stops in the maps
-        function placeMarkers(busStops) {
-            const infoWindow = new google.maps.InfoWindow();
-
-            for (let stop of busStops) {
-                const marker = new google.maps.Marker({
-                    position: { lat: parseFloat(stop.stop_lat), lng: parseFloat(stop.stop_lon) },
-                    map: map,
-                    title: stop.stop_name
-                });
-                allBusStopsData.push(marker);
-                
-                marker.addListener('click', function() {
-                    infoWindow.setContent(`<h3>${stop.stop_name}</h3>`);
-                    infoWindow.open(map, marker);
+            function redrawStoredData() {
+                // Redraw all routes using stored data
+                allRoutesData.forEach(shape => {
+                    drawShapeOnMap(shape.points, shape.shape_id);
                 });
             }
-            
-            // Add listener to the map to close the info window when the map is clicked
-            map.addListener('click', function() {
-                if (infoWindow) {
-                    infoWindow.close();
+
+            document.getElementById('resetMapButton').addEventListener('click', function() {
+                clearMap();
+                redrawStoredData();
+
+                // Check if there is an existing table and remove it
+                const tableBody = document.getElementById('close-by-routes');
+
+                if (tableBody.firstChild) {
+                    tableBody.removeChild(tableBody.firstChild);
                 }
             });
-        }
+            
+            
+            // mark the bus stops in the maps
+            function placeMarkers(busStops) {
+                const infoWindow = new google.maps.InfoWindow();
 
-        function fetchBusStopsForRoute(routeId) {
-            updateLoadingBar(80); // Before fetching bus stops
-
-            fetch(`/get_bus_stops_by_route?route_id=${routeId}`)
-                .then(response => response.json())
-                .then(busStops => {
-                    placeMarkers(busStops);
-                    updateLoadingBar(90); // Update to 90% after fetching bus stops
-                })
-                .catch(error => console.error('Error fetching bus stops:', error));
-        }
-
-        // Fetch route shapes and bus stops data for the input shape ID
-        // clear the current routes and bus stops in the maps
-        // then draw the new routes and bus stops fetched
-
-        function fetchAndStoreData() {
-            updateLoadingBar(30); // Indicate progress
-
-            fetch('/get_route_shapes')
-                .then(response => response.json())
-                .then(data => {
-                    allRoutesData = data;
-                    updateLoadingBar(60); // Update to 60% after fetching route shapes
-                    data.forEach(shape => drawShapeOnMap(shape.points, shape.shape_id));
-                })
-                .catch(error => console.error('Error:', error))
-                .finally(() => {
-                    updateLoadingBar(70); // Update further after processing data
+                for (let stop of busStops) {
+                    const marker = new google.maps.Marker({
+                        position: { lat: parseFloat(stop.stop_lat), lng: parseFloat(stop.stop_lon) },
+                        map: map,
+                        title: stop.stop_name
+                    });
+                    allBusStopsData.push(marker);
+                    
+                    marker.addListener('click', function() {
+                        infoWindow.setContent(`<h3>${stop.stop_name}</h3>`);
+                        infoWindow.open(map, marker);
+                    });
+                }
+                
+                // Add listener to the map to close the info window when the map is clicked
+                map.addListener('click', function() {
+                    if (infoWindow) {
+                        infoWindow.close();
+                    }
                 });
-        }
+            }
 
-        // given the shape points and shape id, draw the shape(route of a bus/trip) on the map
-        function drawShapeOnMap(shapePoints, shapeId) {
-            const shapeCoordinates = shapePoints.map(point => ({ lat: point.lat, lng: point.lng }));
+            function fetchBusStopsForRoute(routeId) {
+                updateLoadingBar(80); // Before fetching bus stops
 
-            const shapePath = new google.maps.Polyline({
-                path: shapeCoordinates,
-                geodesic: true,
-                strokeColor: '#FF0000',
-                strokeOpacity: 1.0,
-                strokeWeight: 2
+                fetch(`/get_bus_stops_by_route?route_id=${routeId}`)
+                    .then(response => response.json())
+                    .then(busStops => {
+                        placeMarkers(busStops);
+                        updateLoadingBar(90); // Update to 90% after fetching bus stops
+                    })
+                    .catch(error => console.error('Error fetching bus stops:', error));
+            }
+
+            // Fetch route shapes and bus stops data for the input shape ID
+            // clear the current routes and bus stops in the maps
+            // then draw the new routes and bus stops fetched
+
+            function fetchAndStoreData() {
+                updateLoadingBar(30); // Indicate progress
+
+                fetch('/get_route_shapes')
+                    .then(response => response.json())
+                    .then(data => {
+                        allRoutesData = data;
+                        updateLoadingBar(60); // Update to 60% after fetching route shapes
+                        data.forEach(shape => drawShapeOnMap(shape.points, shape.shape_id));
+                    })
+                    .catch(error => console.error('Error:', error))
+                    .finally(() => {
+                        updateLoadingBar(70); // Update further after processing data
+                    });
+            }
+
+            // given the shape points and shape id, draw the shape(route of a bus/trip) on the map
+            function drawShapeOnMap(shapePoints, shapeId) {
+                const shapeCoordinates = shapePoints.map(point => ({ lat: point.lat, lng: point.lng }));
+
+                const shapePath = new google.maps.Polyline({
+                    path: shapeCoordinates,
+                    geodesic: true,
+                    strokeColor: '#FF0000',
+                    strokeOpacity: 1.0,
+                    strokeWeight: 2
+                });
+
+                shapes.push(shapePath); // Store the shape in the array
+
+                // if (shapes.length < 1) {
+                //     shapes.push(shapePath); // Store the shape
+                // }
+
+                shapePath.shapeId = shapeId; // Assign the shape ID
+
+                // Add click listener to the shape
+                shapePath.addListener('click', function() {
+                    fetchRouteAndStops(this.shapeId);
+                });
+
+                shapePath.setMap(map);
+            }
+
+            function fetchRouteAndStops(shapeId) {
+                fetch(`/get_route_and_stops?shape_id=${shapeId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        clearMap(); // You might need to create this function to clear existing routes and stops
+                        drawShapeOnMap(data.shape, data.route_id);
+                        placeMarkers(data.stops);
+                        console.log(data.stops);
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+
+
+            function initMap() {
+                // Start with the loading bar
+                updateLoadingBar(10); // Start with 10% to indicate initiation
+
+                const saoPaulo = { lat: -23.550520, lng: -46.633308 };
+                map = new google.maps.Map(document.getElementById("map"), {
+                    center: saoPaulo,
+                    zoom: 13,
+                    styles: mapStyles
+                });
+
+                // Simulate loading data, then hide the loading bar
+                fetchAndStoreData();
+
+                onMapAndDataFullyLoaded();
+            }
+
+            function setNewCenter(newLat, newLng) {
+                var newCenter = new google.maps.LatLng(newLat, newLng);
+                map.setCenter(newCenter);
+                map.setZoom(16);
+            }
+
+            function onMapAndDataFullyLoaded() {
+                updateLoadingBar(100); // Indicate completion
+                setTimeout(() => { hideLoadingBar(); }, 500); // Hide after a short delay
+            }
+
+
+            // Functions to control the loading bar
+            function updateLoadingBar(percentage) {
+                document.getElementById('loadingBar').style.width = percentage + '%';
+            }
+
+            function hideLoadingBar() {
+                document.getElementById('loadingBarContainer').style.display = 'none';
+            }
+
+            
+            document.getElementById('resetMapButton').addEventListener('click', function() {
+                clearMap(); // Clear the current map data
+                redrawStoredData(); // Redraw using stored data
             });
 
-            shapes.push(shapePath); // Store the shape in the array
 
-            // if (shapes.length < 1) {
-            //     shapes.push(shapePath); // Store the shape
-            // }
-
-            shapePath.shapeId = shapeId; // Assign the shape ID
-
-            // Add click listener to the shape
-            shapePath.addListener('click', function() {
-                fetchRouteAndStops(this.shapeId);
-            });
-
-            shapePath.setMap(map);
-        }
-
-        function fetchRouteAndStops(shapeId) {
-            fetch(`/get_route_and_stops?shape_id=${shapeId}`)
+            document.getElementById('addressForm').addEventListener('submit', function(event) {
+                event.preventDefault(); // to prevent the form from submitting traditionally
+                const address = document.getElementById('address').value;
+                let searchAddress = [];
+                fetch('/geocode', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ address: address }),
+                })
                 .then(response => response.json())
                 .then(data => {
-                    clearMap(); // You might need to create this function to clear existing routes and stops
-                    drawShapeOnMap(data.shape, data.route_id);
-                    placeMarkers(data.stops);
-                    console.log(data.stops);
+                    if (data.error) {
+                        alert(data.error);
+                    } 
+                    else {
+                        searchAddress = data;
+                        console.log(searchAddress);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+                fetch('/get_bus_stops_and_routes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ address: address }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    } 
+                    else {
+                        // closeByStops: 'stop_name', 'stop_lat', 'stop_lon'
+                        closeByStops = data[0].stopInfo;
+                        console.log(closeByStops)
+                        // closeByRoutes: 'id'
+                        closeByRoutes = data[0].routeInfo;
+                        console.log(closeByRoutes);
+                        clearMap();
+                        setNewCenter(searchAddress.latitude, searchAddress.longitude);
+                        placeMarkers(closeByStops);
+                        generateTable(closeByRoutes);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            });
+
+            // Handle Login Form Submission
+            document.getElementById('loginForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+                const username = document.getElementById('loginUsername').value;
+                const password = document.getElementById('loginPassword').value;
+
+                fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username: username, password: password })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    }
+                    else {
+                        isLoggedIn = true;
+
+                        // store email of the user
+                        userEmail = data.email;
+                        
+                        // go into the main content
+                        document.getElementById('mainContent').style.display = 'block';
+                        document.getElementById('loginPage').style.display = 'none';
+
+                        // empty out the login form
+                        document.getElementById('loginUsername').value = '';
+                        document.getElementById('loginPassword').value = '';
+
+                        // change the content of the logout button to logout
+                        const navLogin = document.getElementById('navLogin');
+                        navLogin.textContent = 'Logout';
+
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert("An error occurred");
+                });
+            });
+
+
+
+
+            // Function to handle navigation
+            function navigateTo(page) {
+
+                // if the user is not logged in, do not allow them to navigate to other pages
+                if (page !== 'loginPage' && !isLoggedIn) {
+                    alert("Please log in first");
+                    return;
+                }
+
+                
+
+                // if the user is logged in and clicks on the login link, log them out
+                if (isLoggedIn && page === 'loginPage') {
+                    isLoggedIn = false;
+                    userEmail = '';
+
+                    // show the login and registration forms
+
+                    const loginPage = document.getElementById('loginPage');
+                    const schedulePage = document.getElementById('schedulePage');
+                    const mainContent = document.getElementById('mainContent');
+                    const commentPage = document.getElementById('comment'); 
+
+                    loginPage.style.display = 'block';
+                    schedulePage.style.display = 'none';
+                    mainContent.style.display = 'none';
+                    commentPage.style.display = 'none';
+
+                    // change the content of the logout button to login
+                    const navLogin = document.getElementById('navLogin');
+                    navLogin.textContent = 'Login';
+
+                    return;
+                }
+                
+                const loginPage = document.getElementById('loginPage');
+                const schedulePage = document.getElementById('schedulePage');
+                const mainContent = document.getElementById('mainContent');
+                const commentPage = document.getElementById('comment');
+
+                if (loginPage) loginPage.style.display = (page === 'loginPage') ? 'block' : 'none';
+                if (schedulePage) schedulePage.style.display = (page === 'schedulePage') ? 'block' : 'none';
+                if (mainContent) mainContent.style.display = (page === 'mainContent') ? 'block' : 'none';
+                if (commentPage) commentPage.style.display = (page === 'comment') ? 'block' : 'none';
+            }
+
+            // Event listeners for navigation links
+            document.getElementById('navLogin').addEventListener('click', () => navigateTo('loginPage'));
+            document.getElementById('navSchedule').addEventListener('click', () => navigateTo('schedulePage'));
+            document.getElementById('navMainContent').addEventListener('click', () => navigateTo('mainContent'));
+            document.getElementById('navComment').addEventListener('click', () => navigateTo('comment'));
+            
+
+            
+
+
+            // Handle Registration Form Submission
+            document.getElementById('registrationForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+                const username = document.getElementById('registerUsername').value;
+                const email = document.getElementById('registerEmail').value;
+                const password = document.getElementById('registerPassword').value;
+
+                fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username: username, email: email, password: password })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        alert("Registration successful");
+                        
+
+                        // empty out the registration form
+                        document.getElementById('registerUsername').value = '';
+                        document.getElementById('registerEmail').value = '';
+                        document.getElementById('registerPassword').value = '';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert("An error occurred");
+                });
+            });
+
+            
+            function fetchRouteInfo(routeId) {
+            fetch(`/get_route_info?route_id=${routeId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('Error fetching route info:', data.error);
+                    } else {
+                        displayRouteInfo(data);
+                    }
                 })
                 .catch(error => console.error('Error:', error));
-        }
-
-
-        function initMap() {
-            // Start with the loading bar
-            updateLoadingBar(10); // Start with 10% to indicate initiation
-
-            const saoPaulo = { lat: -23.550520, lng: -46.633308 };
-            map = new google.maps.Map(document.getElementById("map"), {
-                center: saoPaulo,
-                zoom: 13,
-                styles: mapStyles
-            });
-
-            // Simulate loading data, then hide the loading bar
-            fetchAndStoreData();
-
-            onMapAndDataFullyLoaded();
-        }
-
-        function setNewCenter(newLat, newLng) {
-            var newCenter = new google.maps.LatLng(newLat, newLng);
-            map.setCenter(newCenter);
-            map.setZoom(16);
-        }
-
-        function onMapAndDataFullyLoaded() {
-            updateLoadingBar(100); // Indicate completion
-            setTimeout(() => { hideLoadingBar(); }, 500); // Hide after a short delay
-        }
-
-
-        // Functions to control the loading bar
-        function updateLoadingBar(percentage) {
-            document.getElementById('loadingBar').style.width = percentage + '%';
-        }
-
-        function hideLoadingBar() {
-            document.getElementById('loadingBarContainer').style.display = 'none';
-        }
-
-        
-        document.getElementById('resetMapButton').addEventListener('click', function() {
-            clearMap(); // Clear the current map data
-            redrawStoredData(); // Redraw using stored data
-        });
-
-
-        document.getElementById('addressForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // to prevent the form from submitting traditionally
-            const address = document.getElementById('address').value;
-            let searchAddress = [];
-            fetch('/geocode', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ address: address }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert(data.error);
-                } 
-                else {
-                    searchAddress = data;
-                    console.log(searchAddress);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-            fetch('/get_bus_stops_and_routes', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ address: address }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert(data.error);
-                } 
-                else {
-                    // closeByStops: 'stop_name', 'stop_lat', 'stop_lon'
-                    closeByStops = data[0].stopInfo;
-                    console.log(closeByStops)
-                    // closeByRoutes: 'id'
-                    closeByRoutes = data[0].routeInfo;
-                    console.log(closeByRoutes);
-                    clearMap();
-                    setNewCenter(searchAddress.latitude, searchAddress.longitude);
-                    placeMarkers(closeByStops);
-                    generateTable(closeByRoutes);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        });
-
-        // Handle Login Form Submission
-        document.getElementById('loginForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const username = document.getElementById('loginUsername').value;
-            const password = document.getElementById('loginPassword').value;
-
-            fetch('/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username: username, password: password })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert(data.error);
-                }
-                else {
-                    isLoggedIn = true;
-
-
-                    // go into the main content
-                    document.getElementById('mainContent').style.display = 'block';
-                    document.getElementById('loginPage').style.display = 'none';
-
-                    // empty out the login form
-                    document.getElementById('loginUsername').value = '';
-                    document.getElementById('loginPassword').value = '';
-
-                    // change the content of the logout button to logout
-                    const navLogin = document.getElementById('navLogin');
-                    navLogin.textContent = 'Logout';
-
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert("An error occurred");
-            });
-        });
-
-
-
-        document.getElementById('navLogin').addEventListener('click', function() {
-            document.getElementById('loginPage').style.display = 'block';
-            document.getElementById('schedulePage').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'none';
-            document.getElementById('comment').style.display = 'none';
-        });
-
-        document.getElementById('navSchedule').addEventListener('click', function() {
-            document.getElementById('loginPage').style.display = 'none';
-            document.getElementById('schedulePage').style.display = 'block';
-            document.getElementById('mainContent').style.display = 'none';
-            document.getElementById('comment').style.display = 'none';
-        });
-
-        document.getElementById('navMainContent').addEventListener('click', function() {
-            document.getElementById('loginPage').style.display = 'none';
-            document.getElementById('schedulePage').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'block';
-            document.getElementById('comment').style.display = 'none';
-        });
-        document.getElementById('navComment').addEventListener('click', function() {
-            document.getElementById('loginPage').style.display = 'none';
-            document.getElementById('schedulePage').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'none';
-            document.getElementById('comment').style.display = 'block';
-        });
-
-        // Function to handle navigation
-        function navigateTo(page) {
-
-            // if the user is not logged in, do not allow them to navigate to other pages
-            if (page !== 'loginPage' && !isLoggedIn) {
-                alert("Please log in first");
-                return;
             }
 
-            document.getElementById('loginPage').style.display = (page === 'loginPage') ? 'block' : 'none';
-            document.getElementById('schedulePage').style.display = (page === 'schedulePage') ? 'block' : 'none';
-            document.getElementById('mainContent').style.display = (page === 'mainContent') ? 'block' : 'none';
-            document.getElementById('comment').style.display = (page === 'comment') ? 'block' : 'none';
-        }
+            function displayRouteInfo(data) {
+                const table = document.getElementById('routeInfoTable');
+                // Clear existing data
+                table.innerHTML = `
+                    <tr>
+                        <th>Route ID</th>
+                        <th>Route Name</th>
+                        <th>Fare</th>
+                    </tr>`;
 
-        // Event listeners for navigation links
-        document.getElementById('navLogin').addEventListener('click', () => navigateTo('loginPage'));
-        document.getElementById('navSchedule').addEventListener('click', () => navigateTo('schedulePage'));
-        document.getElementById('navMainContent').addEventListener('click', () => navigateTo('mainContent'));
-        document.getElementById('navComment').addEventListener('click', () => navigateTo('comment'));
-        
-
-        document.getElementById('submitComment').addEventListener('click', function() {
-            const comment = document.getElementById('commentBox').value;
-            if (comment.trim() === '') {
-                alert('Please enter a comment.');
-                return;
+                // Add new data
+                table.innerHTML += `
+                    <tr>
+                        <td>${data.route_id}</td>
+                        <td>${data.route_long_name}</td>
+                        <td>${data.price}</td>
+                    </tr>`;
             }
 
-            // Add the comment to the display (for example purposes)
-            // In a real application, you would send this to the server
-            const commentsDisplay = document.getElementById('commentsDisplay');
-            const newComment = document.createElement('p');
-            newComment.innerHTML = `<strong>You:</strong> ${comment}`;
-            commentsDisplay.appendChild(newComment);
+            function clearComments() {
+                document.querySelectorAll('.commentsDisplay').forEach(div => {
+                    div.innerHTML = ''; // Clear existing comments
+                });
+            }
 
-            // Clear the comment box
-            document.getElementById('commentBox').value = '';
-        });
+            function fetchComments(routeId) {
+                clearComments(); // Clear comments before fetching new ones
 
+                fetch(`/get_comments?route_id=${routeId}`)
+                    .then(response => response.json())
+                    .then(comments => {
+                        comments.forEach(comment => {
+                            displayComment(comment);
+                        });
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
 
-        // Handle Registration Form Submission
-        document.getElementById('registrationForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const username = document.getElementById('registerUsername').value;
-            const email = document.getElementById('registerEmail').value;
-            const password = document.getElementById('registerPassword').value;
+            function displayComment(comment) {
+                Object.keys(comment).forEach(key => {
+                    if (key !== 'email' && comment[key]) {
+                        const commentData = JSON.parse(comment[key]);
+                        const commentsDisplay = document.querySelector(`#${key}Comments .commentsDisplay`);
 
-            fetch('/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username: username, email: email, password: password })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert(data.error);
-                } else {
-                    alert("Registration successful");
+                        if (commentsDisplay) {
+                            commentData.forEach(singleComment => {
+                                if (singleComment.trim() !== "") { // Check if the comment is not just an empty string
+                                    commentsDisplay.innerHTML += `<p><strong>${comment.email}</strong>: ${singleComment}</p>`;
+                                }
+                            });
+                        } else {
+                            console.error(`${key}Comments element not found`);
+                        }
+                    }
+                });
+            }
+
+            function postComment(routeId, commentType, commentText, commentEmail) {
+                let commentData = { route_id: routeId, email: commentEmail };
+                commentData[commentType] = commentText;
+
+                fetch('/post_comment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(commentData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('Error posting comment:', data.error);
+                    } else {
+                        alert('Comment posted successfully');
+                        fetchComments(routeId); // Refresh comments
+                        fetchRouteInfo(routeId); // Refresh route info
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
+
+            // Attach event listeners to comment submission buttons
+            document.querySelectorAll('.submitComment').forEach(button => {
+                button.addEventListener('click', function() {
+                    const commentBox = this.previousElementSibling;
+                    const commentText = commentBox.value;
+                    const commentType = this.getAttribute('data-type');
+                    const routeId = '1012-10'; // Replace with the actual route ID
                     
-
-                    // empty out the registration form
-                    document.getElementById('registerUsername').value = '';
-                    document.getElementById('registerEmail').value = '';
-                    document.getElementById('registerPassword').value = '';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert("An error occurred");
+                    if (commentText.trim()) {
+                        postComment(routeId, commentType, commentText, userEmail);
+                        commentBox.value = ''; // Clear the comment box after posting
+                    } else {
+                        alert('Please enter a comment.');
+                    }
+                });
             });
-        });
 
-        
-        function updateMapWithNewStops(stops) {
-            // Clear previous markers if necessary
-            // ...
+            
+            function updateMapWithNewStops(stops) {
+                // Clear previous markers if necessary
+                // ...
 
-            // Add new markers
-            for (let stop of stops) {
-                // Your existing code to place markers
+                // Add new markers
+                for (let stop of stops) {
+                    // Your existing code to place markers
+                }
             }
-        }
 
-        //Create a the schedule table with given data
-        function generateSchedule(schedule){
-            // Check if there is an existing table and remove it
-            const tableBody = document.getElementById('schedule-body');
+            //Create a the schedule table with given data
+            function generateSchedule(schedule){
+                // Check if there is an existing table and remove it
+                const tableBody = document.getElementById('schedule-body');
 
-            if (tableBody.firstChild) {
-                tableBody.removeChild(tableBody.firstChild);
+                if (tableBody.firstChild) {
+                    tableBody.removeChild(tableBody.firstChild);
+                }
+                // Loop through the JSON data and create table rows
+                schedule.forEach(item => {
+                    const row = document.createElement('tr');
+
+                    // Create table cells for each property
+                    Object.keys(item).forEach(key => {
+                        const cell = document.createElement('td');
+                        cell.textContent = item[key];
+                        row.appendChild(cell);
+                    });
+
+                    // Append the row to the table body
+                    tableBody.appendChild(row);
+                });
             }
-            // Loop through the JSON data and create table rows
-            schedule.forEach(item => {
+
+
+            // test data
+            let data = [
+                {
+                    stop1: "8:00",
+                    stop2: "8:15",
+                    stop3: "8:30",
+                    stop4: "8:45",
+                    stop5: "9:00"
+                },
+                {
+                    stop1: "9:00",
+                    stop2: "9:15",
+                    stop3: "9:30",
+                    stop4: "9:45",
+                    stop5: "10:00"
+                }
+            ]
+            // just to test if schedule works -) later put into the fetch 
+            document.getElementById('showSchedule').addEventListener('click', function() {
+                generateSchedule(data);
+            });
+
+            // Generate the table of close-by routes
+            function generateTable(dataList) {
+
+                // Check if there is an existing table and remove it
+                const tableBody = document.getElementById('close-by-routes');
+
+                if (tableBody.firstChild) {
+                    tableBody.removeChild(tableBody.firstChild);
+                }
+
                 const row = document.createElement('tr');
 
-                // Create table cells for each property
-                Object.keys(item).forEach(key => {
-                    const cell = document.createElement('td');
-                    cell.textContent = item[key];
-                    row.appendChild(cell);
-                });
+                // Create a text node for the label
+                const labelTextNode = document.createTextNode("Close-by Routes:");
+                const title = document.createElement('td');
+                title.textContent = labelTextNode;
+                row.appendChild(labelTextNode);
 
-                // Append the row to the table body
+                // Loop through the list of routes and create table cells for each one
+                dataList.forEach(item => {
+                    // Create table cells for each property
+                    Object.keys(item).forEach(key => {
+                        const cell = document.createElement('td');
+                        cell.textContent = item[key];
+                        row.appendChild(cell);
+                    });
+                });
                 tableBody.appendChild(row);
-            });
-        }
-
-
-        // test data
-        let data = [
-            {
-                stop1: "8:00",
-                stop2: "8:15",
-                stop3: "8:30",
-                stop4: "8:45",
-                stop5: "9:00"
-            },
-            {
-                stop1: "9:00",
-                stop2: "9:15",
-                stop3: "9:30",
-                stop4: "9:45",
-                stop5: "10:00"
-            }
-        ]
-        // just to test if schedule works -) later put into the fetch 
-        document.getElementById('showSchedule').addEventListener('click', function() {
-            generateSchedule(data);
-        });
-
-        // Generate the table of close-by routes
-        function generateTable(dataList) {
-
-            // Check if there is an existing table and remove it
-            const tableBody = document.getElementById('close-by-routes');
-
-            if (tableBody.firstChild) {
-                tableBody.removeChild(tableBody.firstChild);
             }
 
-            const row = document.createElement('tr');
-
-            // Create a text node for the label
-            const labelTextNode = document.createTextNode("Close-by Routes:");
-            const title = document.createElement('td');
-            title.textContent = labelTextNode;
-            row.appendChild(labelTextNode);
-
-            // Loop through the list of routes and create table cells for each one
-            dataList.forEach(item => {
-                // Create table cells for each property
-                Object.keys(item).forEach(key => {
-                    const cell = document.createElement('td');
-                    cell.textContent = item[key];
-                    row.appendChild(cell);
-                });
-            });
-            tableBody.appendChild(row);
-        }
 
 
-    </script>
 
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBS-S37L58YssF52HQocELjBEI4s1-NSiM&callback=initMap"></script>
 
-    <!-- <script src="{{ url_for('static', filename='js/data.js') }}" type="module"></script>
-    <script src="{{ url_for('static', filename='js/map.js') }}" type="module"></script>
-    <script src="{{ url_for('static', filename='js/ui.js') }}" type="module"></script> -->
+        </script>
 
-</body>
+        <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBS-S37L58YssF52HQocELjBEI4s1-NSiM&callback=initMap"></script>
+
+        <!-- <script src="{{ url_for('static', filename='js/data.js') }}" type="module"></script>
+        <script src="{{ url_for('static', filename='js/map.js') }}" type="module"></script>
+        <script src="{{ url_for('static', filename='js/ui.js') }}" type="module"></script> -->
+
+    </body>
 </html>
