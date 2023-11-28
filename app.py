@@ -449,6 +449,33 @@ def post_comment():
 
     return jsonify({'message': 'Comment added or updated successfully'}), 201
 
+@app.route('/get_route_and_trip_info', methods=['GET'])
+def get_route_and_trip_info():
+    route_id = request.args.get('route_id')
+
+    # Construct the SQL query
+    sql_query = text("""
+        SELECT Route.route_id, Trips.trip_id, Trips.trip_headsign, Trips.direction_id
+        FROM cs411.Route 
+        JOIN cs411.Trips ON Trips.route_id = Route.route_id 
+        WHERE Route.route_id = :route_id;
+    """)
+
+    # Execute the query
+    try:
+        with db.engine.connect() as connection:
+            result = connection.execute(sql_query, {'route_id': route_id}).fetchall()
+            if result:
+                trips_data = [{
+                    'trip_id': row.trip_id,
+                    'trip_headsign': row.trip_headsign,
+                    'direction_id': row.direction_id
+                } for row in result]
+                return jsonify({'route_id': route_id, 'trips_data': trips_data})
+            else:
+                return jsonify({'error': 'Route not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/post_schedule', methods = ['POST'])
 def post_schedule():
@@ -458,4 +485,4 @@ def post_schedule():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=8000, debug=True)

@@ -91,9 +91,25 @@
             <h2>Bus Schedule</h2>
             <div id="busSchedule">
                 <!-- Example Bus Schedule Content -->
-                <p>Route 101 - Main Street</p>
+                <!-- p>Route 101 - Main Street</p> -->
+
+                <form id="routeForm">
+                    <label for="route_id">Choose a route:</label>
+                    <input type="text" id="route_id" placeholder="Enter route id" required>
+                    <button type="find">Find Route</button>
+                </form>
+
+
+                <form id="directionForm">
+                    <label for="headsign_select">Choose a direction:</label>
+                    <select name="headsign" id="headsign_select">
+                    <option value="">--Please choose an option--</option>
+                        </select>
+                    <button id = "showSchedule">Show the schedule</button>
+                </form>
+
                 <!-- Button for test case -->
-                <button id = "showSchedule"></button>
+                <!-- button id = "showSchedule"></button> -->
                 <div style="overflow-x:auto;">
                     <!-- <table>
                         <tr>
@@ -717,8 +733,53 @@
                 }
             }
 
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("routeForm").addEventListener("submit", function (e) {
+            e.preventDefault(); // Prevents form submission
+            const routeId = document.getElementById("route_id").value;
+            fetchRouteTripInfo(routeId);
+        });
+
+        document.getElementById("directionForm").addEventListener("submit", function (e) {
+            e.preventDefault(); // Prevents form submission
+            generateSchedule();
+        });
+    });
+
+    function fetchRouteTripInfo(routeId) {
+        fetch(`/get_route_and_trip_info?route_id=${routeId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Error fetching route info:', data.error);
+                    // Optionally, update the UI to show an error message
+                } else {
+                    populateHeadsignOption(data);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function populateHeadsignOption(data) {
+        const headsignSelect = document.getElementById("headsign_select");
+        headsignSelect.innerHTML = '<option value="">--Please choose an option--</option>'; // Reset the select menu
+
+        // Add the received trip headsign as an option
+        //const option = document.createElement("option");
+        //option.value = data.trip_headsign;
+        //option.text = data.trip_headsign;
+        //headsignSelect.appendChild(option);
+        data.trips_data.forEach(function (trip) {
+            const option = document.createElement("option");
+            option.value = trip.trip_id; // or trip.trip_headsign, depending on what you want to use as a value
+            option.text = trip.trip_headsign;
+            headsignSelect.appendChild(option);
+        });
+    }
+
             //Create a the schedule table with given data
             function generateSchedule(schedule){
+                const selectedDirection = document.getElementById("headsign_select").value;
                 // Check if there is an existing table and remove it
                 const tableBody = document.getElementById('schedule-body');
 
@@ -769,7 +830,7 @@
                     stop5: "10:00"
                 }
             ]
-            // just to test if schedule works -) later put into the fetch 
+            // just to test if schedule works -) later put into the fetch
             document.getElementById('showSchedule').addEventListener('click', function() {
                 generateSchedule(data);
             });
