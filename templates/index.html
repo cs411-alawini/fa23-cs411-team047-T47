@@ -111,32 +111,7 @@
                 <!-- Button for test case -->
                 <!-- button id = "showSchedule"></button> -->
                 <div style="overflow-x:auto;">
-                    <!-- <table>
-                        <tr>
-                            <th>Starting stop</th>
-                            <th>Bus Stop A</th>
-                            <th>Bus Stop B</th>
-                            <th>Bus Stop C</th>
-                            <th>Destination stop</th>
-                        </tr>
-                        <tr>
-                            <th>08:00 AM</th>
-                            <th>08:15 AM</th>
-                            <th>08:30 AM</th>
-                            <th>08:45 AM</th>
-                            <th>08:50 AM</th>
-                        </tr>
-                    </table> -->
                     <table border="1">
-                        <thead>
-                        <tr>
-                            <th>Starting stop</th>
-                            <th>Bus Stop A</th>
-                            <th>Bus Stop B</th>
-                            <th>Bus Stop C</th>
-                            <th>Destination stop</th>
-                        </tr>
-                        </thead>
                         <tbody id="schedule-body"></tbody>
                     </table>
                 </div>
@@ -788,7 +763,7 @@
 
             // Get the header row with all the stops
             const headerRow = document.createElement('tr');
-            Object.keys(data[0]).forEach(stop => {
+            Object.keys(schedule[0]).forEach(stop => {
                 const th = document.createElement('th');
                 th.textContent = stop;
                 headerRow.appendChild(th);
