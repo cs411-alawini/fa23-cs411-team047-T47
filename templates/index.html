@@ -411,7 +411,6 @@
             document.getElementById('resetMapButton').addEventListener('click', function() {
                 clearMap(); // Clear the current map data
                 redrawStoredData(); // Redraw using stored data
-                // setNewCenter(-23.550520 -46.633308 );
                 const saoPaulo = { lat: -23.550520, lng: -46.633308 };
                 map.setCenter(saoPaulo);
                 map.setZoom(13);
@@ -742,7 +741,7 @@
 
         document.getElementById("directionForm").addEventListener("submit", function (e) {
             e.preventDefault(); // Prevents form submission
-            generateSchedule();
+            // generateSchedule();
         });
     });
 
@@ -777,93 +776,113 @@
         });
     }
 
-            //Create a the schedule table with given data
-            function generateSchedule(schedule){
-                const selectedDirection = document.getElementById("headsign_select").value;
-                // Check if there is an existing table and remove it
-                const tableBody = document.getElementById('schedule-body');
+        //Create a the schedule table with given data
+        function generateSchedule(schedule){
+    
+            // Check if there is an existing table and remove it
+            const tableBody = document.getElementById('schedule-body');
 
-                while (tableBody.firstChild) {
-                    tableBody.removeChild(tableBody.firstChild);
-                }
-
-                // Get the header row with all the stops
-                const headerRow = document.createElement('tr');
-                Object.keys(data[0]).forEach(stop => {
-                    const th = document.createElement('th');
-                    th.textContent = stop;
-                    headerRow.appendChild(th);
-                });
-                tableBody.appendChild(headerRow);
-
-                // Loop through the JSON data and create table rows
-                schedule.forEach(item => {
-                    const row = document.createElement('tr');
-
-                    // Create table cells for each property
-                    Object.keys(item).forEach(key => {
-                        const cell = document.createElement('td');
-                        cell.textContent = item[key];
-                        row.appendChild(cell);
-                    });
-
-                    // Append the row to the table body
-                    tableBody.appendChild(row);
-                });
+            while (tableBody.firstChild) {
+                tableBody.removeChild(tableBody.firstChild);
             }
 
-
-            // test data
-            let data = [
-                {
-                    stop1: "8:00",
-                    stop2: "8:15",
-                    stop3: "8:30",
-                    stop4: "8:45",
-                    stop5: "9:00"
-                },
-                {
-                    stop1: "9:00",
-                    stop2: "9:15",
-                    stop3: "9:30",
-                    stop4: "9:45",
-                    stop5: "10:00"
-                }
-            ]
-            // just to test if schedule works -) later put into the fetch
-            document.getElementById('showSchedule').addEventListener('click', function() {
-                generateSchedule(data);
+            // Get the header row with all the stops
+            const headerRow = document.createElement('tr');
+            Object.keys(data[0]).forEach(stop => {
+                const th = document.createElement('th');
+                th.textContent = stop;
+                headerRow.appendChild(th);
             });
+            tableBody.appendChild(headerRow);
 
-            // Generate the table of close-by routes
-            function generateTable(dataList) {
-
-                // Check if there is an existing table and remove it
-                const tableBody = document.getElementById('close-by-routes');
-
-                if (tableBody.firstChild) {
-                    tableBody.removeChild(tableBody.firstChild);
-                }
-
+            // Loop through the JSON data and create table rows
+            schedule.forEach(item => {
                 const row = document.createElement('tr');
 
-                // Create a text node for the label
-                const labelTextNode = document.createTextNode("Close-by Routes:");
-                const title = document.createElement('td');
-                title.textContent = labelTextNode;
-                row.appendChild(labelTextNode);
-
-                // Loop through the list of routes and create table cells for each one
-                dataList.forEach(item => {
-                    // Create table cells for each property
-                    Object.keys(item).forEach(key => {
-                        const cell = document.createElement('td');
-                        cell.textContent = item[key];
-                        row.appendChild(cell);
-                    });
+                // Create table cells for each property
+                Object.keys(item).forEach(key => {
+                    const cell = document.createElement('td');
+                    cell.textContent = item[key];
+                    row.appendChild(cell);
                 });
+
+                // Append the row to the table body
                 tableBody.appendChild(row);
+            });
+        }
+
+
+        // test data
+        let data = [
+            {
+                stop1: "8:00",
+                stop2: "8:15",
+                stop3: "8:30",
+                stop4: "8:45",
+                stop5: "9:00"
+            },
+            {
+                stop1: "9:00",
+                stop2: "9:15",
+                stop3: "9:30",
+                stop4: "9:45",
+                stop5: "10:00"
             }
+        ]
+        // just to test if schedule works -) later put into the fetch
+        document.getElementById('showSchedule').addEventListener('click', function() {
+            let selectedDirection = document.getElementById("headsign_select").value;
+            console.log(selectedDirection);
+            let schedule = [];
+            fetch('/post_schedule', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ trip_id: selectedDirection})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } 
+                else{
+                    console.log(data)
+                    generateSchedule(data);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        // Generate the table of close-by routes
+        function generateTable(dataList) {
+
+            // Check if there is an existing table and remove it
+            const tableBody = document.getElementById('close-by-routes');
+
+            if (tableBody.firstChild) {
+                tableBody.removeChild(tableBody.firstChild);
+            }
+
+            const row = document.createElement('tr');
+
+            // Create a text node for the label
+            const labelTextNode = document.createTextNode("Close-by Routes:");
+            const title = document.createElement('td');
+            title.textContent = labelTextNode;
+            row.appendChild(labelTextNode);
+
+            // Loop through the list of routes and create table cells for each one
+            dataList.forEach(item => {
+                // Create table cells for each property
+                Object.keys(item).forEach(key => {
+                    const cell = document.createElement('td');
+                    cell.textContent = item[key];
+                    row.appendChild(cell);
+                });
+            });
+            tableBody.appendChild(row);
+        }
 
 
 
