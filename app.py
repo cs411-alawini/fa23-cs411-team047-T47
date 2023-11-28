@@ -154,7 +154,6 @@ def index():
     #     return render_template('index.html')
     # return render_template('login.html')
     return render_template('index.html')
-    # return redirect(url_for('login.html'))
 
 # register function
 @app.route('/register', methods=['POST'])
@@ -250,6 +249,7 @@ def get_bus_stops():
     location = geocoding_data['results'][0]['geometry']['location']
     latitude = location['lat']
     longitude = location['lng']
+    print(longitude)
 
     # Check if the address in range of the city
     if valid_range(latitude, longitude):
@@ -376,6 +376,7 @@ def get_comments():
         return jsonify({'error': 'Database operation failed'}), 500
 
 
+
 @app.route('/post_comment', methods=['POST'])
 def post_comment():
     data = request.get_json()
@@ -386,68 +387,82 @@ def post_comment():
 
     email = data['email']
     route_id = data['route_id']
-    crowdedness = json.dumps([data.get('crowdedness', '')])  # Default to empty list serialized
-    safety = json.dumps([data.get('safety', '')])  # Same for safety
-    temperature = json.dumps([data.get('temperature', '')])
-    accessibility = json.dumps([data.get('accessibility', '')])
+    new_crowdedness = data.get('crowdedness', '')
+    new_safety = data.get('safety', '')
+    new_temperature = data.get('temperature', '')
+    new_accessibility = data.get('accessibility', '')
 
-    # Connect to the database
     try:
         with db.engine.connect() as connection:
-            # Check for existing comment
-            check_comment_query = text("SELECT * FROM Comment WHERE email = :email AND route_id = :route_id")
-            existing_comment = connection.execute(check_comment_query, {'email': email, 'route_id': route_id}).first()
+            # Set the isolation level to 'READ COMMITTED'
+            connection.execution_options(isolation_level="READ COMMITTED")
+
+            # Begin a new transaction
+            trans = connection.begin()
 
 
-            # If a comment exists, append new data to it
-            if existing_comment:
-                existing_crowdedness = json.loads(existing_comment.crowdedness) if existing_comment.crowdedness else []
-                existing_safety = json.loads(existing_comment.safety) if existing_comment.safety else []
-                existing_temperature = json.loads(existing_comment.temperature) if existing_comment.temperature else []
-                existing_accessibility = json.loads(existing_comment.accessibility) if existing_comment.accessibility else []
-
-                if 'crowdedness' in data and data['crowdedness'].strip():
-                    existing_crowdedness.append(data['crowdedness'])
-                if 'safety' in data and data['safety'].strip():
-                    existing_safety.append(data['safety'])
-                if 'temperature' in data and data['temperature'].strip():
-                    existing_temperature.append(data['temperature'])
-                if 'accessibility' in data and data['accessibility'].strip():
-                    existing_accessibility.append(data['accessibility'])
-
-                crowdedness = json.dumps(existing_crowdedness)
-                safety = json.dumps(existing_safety)
-                temperature = json.dumps(existing_temperature)
-                accessibility = json.dumps(existing_accessibility)
-
-
-            # Upsert comment data
-            upsert_comment_query = text("""
-                INSERT INTO Comment (email, route_id, crowdedness, safety, temperature, accessibility)
-                VALUES (:email, :route_id, :crowdedness, :safety, :temperature, :accessibility)
-                ON DUPLICATE KEY UPDATE
-                crowdedness = VALUES(crowdedness),
-                safety = VALUES(safety),
-                temperature = VALUES(temperature),
-                accessibility = VALUES(accessibility)
+            # Advanced Query 1: LEFT JOIN, WHERE clause, and Aggregation
+            existing_comment_query = text("""
+                SELECT c1.crowdedness, c1.safety, c1.temperature, c1.accessibility, COUNT(c3.route_id) AS route_comment_count
+                FROM Comment c1
+                LEFT JOIN Comment c2 ON c1.email = c2.email AND c2.route_id != :route_id
+                LEFT JOIN Comment c3 ON c1.route_id = c3.route_id
+                WHERE c1.email = :email AND c1.route_id = :route_id AND c2.email IS NULL
+                GROUP BY c1.crowdedness, c1.safety, c1.temperature, c1.accessibility
             """)
-            connection.execute(upsert_comment_query, {
-                'email': email, 
-                'route_id': route_id, 
-                'crowdedness': crowdedness, 
-                'safety': safety, 
-                'temperature': temperature, 
-                'accessibility': accessibility
-            })
 
-            connection.commit()
+            
+            existing_comment = connection.execute(existing_comment_query, {'email': email, 'route_id': route_id}).first()
+
+            if existing_comment:
+
+                
+                # Append new comments to existing ones
+                updated_crowdedness = json.dumps(json.loads(existing_comment.crowdedness) + [new_crowdedness])
+                updated_safety = json.dumps(json.loads(existing_comment.safety) + [new_safety])
+                updated_temperature = json.dumps(json.loads(existing_comment.temperature) + [new_temperature])
+                updated_accessibility = json.dumps(json.loads(existing_comment.accessibility) + [new_accessibility])
+
+                # Update the existing comment
+                update_comment_query = text("""
+                    UPDATE Comment 
+                    SET crowdedness = :crowdedness, safety = :safety, 
+                        temperature = :temperature, accessibility = :accessibility
+                    WHERE email = :email AND route_id = :route_id;
+                """)
+                connection.execute(update_comment_query, {
+                    'email': email, 'route_id': route_id, 
+                    'crowdedness': updated_crowdedness, 'safety': updated_safety, 
+                    'temperature': updated_temperature, 'accessibility': updated_accessibility
+                })
+            else:
+                # Advanced Query 2: Conditional Insert with Subquery and Set Operation (Intersection)
+                insert_comment_query = text("""
+                    INSERT INTO Comment (email, route_id, crowdedness, safety, temperature, accessibility)
+                    SELECT :email, :route_id, :crowdedness, :safety, :temperature, :accessibility
+                    FROM (SELECT 1) AS dummy
+                    WHERE EXISTS (
+                        SELECT 1 FROM User WHERE email = :email
+                        INTERSECT
+                        SELECT 1 FROM Route WHERE route_id = :route_id
+                    );
+                """)
+                connection.execute(insert_comment_query, {
+                    'email': email, 'route_id': route_id, 
+                    'crowdedness': json.dumps([new_crowdedness]), 
+                    'safety': json.dumps([new_safety]), 
+                    'temperature': json.dumps([new_temperature]), 
+                    'accessibility': json.dumps([new_accessibility])
+                })
+
+            # Commit the transaction
+            trans.commit()
+            return jsonify({'message': 'Comment added or updated successfully'}), 201
 
     except Exception as e:
         # Log the exception for debugging
         app.logger.error(f"Error in post_comment: {e}")
         return jsonify({'error': 'Database operation failed'}), 500
-
-    return jsonify({'message': 'Comment added or updated successfully'}), 201
 
 @app.route('/get_route_and_trip_info', methods=['GET'])
 def get_route_and_trip_info():
@@ -476,6 +491,7 @@ def get_route_and_trip_info():
                 return jsonify({'error': 'Route not found'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
 
 @app.route('/post_schedule', methods = ['POST'])
 def post_schedule():
@@ -490,6 +506,7 @@ def post_schedule():
     response = jsonify(json.loads(json_str)) 
     
     return response
+
 
 
 if __name__ == '__main__':
