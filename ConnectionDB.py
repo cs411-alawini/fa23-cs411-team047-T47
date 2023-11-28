@@ -93,7 +93,7 @@ def get_schedule(trip_id):
                                 database='cs411')
 
   mycursor = db.cursor()
-  
+
   # To get the number of freqency per this trip
   result = mycursor.callproc('frequency',[trip_id, 0])
   freq_num = result[1]
@@ -102,26 +102,29 @@ def get_schedule(trip_id):
   result = mycursor.callproc('stopNum',[trip_id, 0])
   stop_num = result[1]
 
-  schedule = np.zeros([freq_num + 1,stop_num])
-  schedule = schedule.astype('str') 
-
-  f_count = 0
+  f_count = -1
 
   s_count = 0
 
   # To get the list of stop names in order
   mycursor.callproc('stopName',[trip_id])
 
+  stops = np.zeros(stop_num)
+  stops = stops.astype('str') 
+
   for result in mycursor.stored_results():
     details = result.fetchall()
 
   for det in details:
-    schedule[0][s_count] = det[0]
+    stops[s_count] = det[0]
     s_count += 1
 
+  # To get the data of schedule from database 
   mycursor.callproc('schedule',[trip_id])
 
-  # To put the schedule data in 
+  schedule = np.zeros([freq_num,stop_num])
+  schedule = schedule.astype('str') 
+
   for result in mycursor.stored_results():
     details = result.fetchall()
 
@@ -130,10 +133,15 @@ def get_schedule(trip_id):
       f_count += 1
     schedule[f_count,det[1]-1] = str(det[0])
 
+  schedule_list = []
+  for freq in schedule:
+    schedule_list.append(dict(zip(stops,freq)))
+
   mycursor.close()
   db.close()
 
-  return schedule
+  return schedule_list
+
 
 # get_close_by_routes(-23.439609, -46.807039)
 # get_schedule('1012-10-0')
