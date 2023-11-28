@@ -823,7 +823,8 @@
                         alert(data.error);
                     } 
                     else{
-                        console.log(data)
+                        console.log(data) // BUT here it is sorted??????
+                        console.log(Object.keys(data[0])[0]);
                         generateSchedule(data);
 
                         // also populate the route info as well as the comments
