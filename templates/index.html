@@ -786,25 +786,7 @@
             });
         }
 
-
-        // test data
-        let data = [
-            {
-                stop1: "8:00",
-                stop2: "8:15",
-                stop3: "8:30",
-                stop4: "8:45",
-                stop5: "9:00"
-            },
-            {
-                stop1: "9:00",
-                stop2: "9:15",
-                stop3: "9:30",
-                stop4: "9:45",
-                stop5: "10:00"
-            }
-        ]
-        // just to test if schedule works -) later put into the fetch
+        // After being clicked, with given trip_id, we can generate the schedule 
         document.getElementById('showSchedule').addEventListener('click', function() {
             let selectedDirection = document.getElementById("headsign_select").value;
             console.log(selectedDirection);
@@ -822,7 +804,8 @@
                     alert(data.error);
                 } 
                 else{
-                    console.log(data)
+                    console.log(data) // BUT here it is sorted??????
+                    console.log(Object.keys(data[0])[0]);
                     generateSchedule(data);
                 }
             })

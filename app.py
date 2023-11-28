@@ -481,19 +481,15 @@ def get_route_and_trip_info():
 def post_schedule():
     data = request.get_json()
     trip_id = data.get('trip_id')
-    print(trip_id)
-    print(get_schedule(trip_id))
-    return jsonify(get_schedule(trip_id))
-    # try:
-    #     data = request.get_json()
-    #     trip_id = data.get('trip_id')
-    #     print(trip_id)
-    #     schedule = get_schedule(trip_id)
-    #     print(schedule)
-    #     return jsonify(schedule)
-    # except Exception as e:
-    #     print(f"An error occurred: {str(e)}")
-    #     return jsonify({"error": "Internal Server Error"}), 500
+
+    # Serialize the dictionary to JSON without sorting keys
+    json_str = json.dumps(get_schedule(trip_id), sort_keys=False)
+    # print(json_str)
+    
+    # Use jsonify with the serialized JSON string
+    response = jsonify(json.loads(json_str)) 
+    
+    return response
 
 
 if __name__ == '__main__':
