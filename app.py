@@ -464,6 +464,7 @@ def post_comment():
         app.logger.error(f"Error in post_comment: {e}")
         return jsonify({'error': 'Database operation failed'}), 500
 
+
 # get comment for each user
 @app.route('/get_user_comments', methods=['GET'])
 def get_user_comments():
@@ -492,6 +493,7 @@ def get_user_comments():
     except Exception as e:
         app.logger.error(f"Error in get_user_comments: {e}")
         return jsonify({'error': 'Database operation failed'}), 500
+
 
 @app.route('/get_route_and_trip_info', methods=['GET'])
 def get_route_and_trip_info():

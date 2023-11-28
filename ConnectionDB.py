@@ -145,3 +145,4 @@ def get_schedule(trip_id):
 
 # get_close_by_routes(-23.439609, -46.807039)
 # get_schedule('1012-10-0')
+# print(get_schedule('1012-10-1')[0])
