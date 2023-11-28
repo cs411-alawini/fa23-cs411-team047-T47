@@ -98,6 +98,7 @@
                     <input type="text" id="route_id" placeholder="Enter route id" required>
                     <button type="find">Find Route</button>
                 </form>
+                <p id="error-message" style="color: red;"></p>
 
 
                 <form id="directionForm">
@@ -105,7 +106,8 @@
                     <select name="headsign" id="headsign_select">
                     <option value="">--Please choose an option--</option>
                         </select>
-                    <button id = "showSchedule">Show the schedule</button>
+                    <button id="showSchedule" disabled>Show the schedule</button>
+
                 </form>
                 <!-- Button for test case -->
                 <!-- button id = "showSchedule"></button> -->
@@ -801,34 +803,48 @@
             });
 
             function fetchRouteTripInfo(routeId) {
-                fetch(`/get_route_and_trip_info?route_id=${routeId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.error) {
-                            console.error('Error fetching route info:', data.error);
-                            // Optionally, update the UI to show an error message
-                        } else {
-                            populateHeadsignOption(data);
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
+    document.getElementById("showSchedule").disabled = true;
+    const errorMessageElement = document.getElementById('error-message');
+    const headsignSelect = document.getElementById("headsign_select");
+
+    fetch(`/get_route_and_trip_info?route_id=${routeId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('Error fetching route info:', data.error);
+                errorMessageElement.textContent = 'Error: ' + data.error;
+                // Reset the "Choose direction" selection field
+                headsignSelect.innerHTML = '<option value="">--Please choose an option--</option>';
+            } else {
+                errorMessageElement.textContent = ''; // Clear any existing error message
+                populateHeadsignOption(data);
             }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            errorMessageElement.textContent = 'An error occurred while fetching data.';
+            // Reset the "Choose direction" selection field
+            headsignSelect.innerHTML = '<option value="">--Please choose an option--</option>';
+        });
+}
+
+
 
             function populateHeadsignOption(data) {
                 const headsignSelect = document.getElementById("headsign_select");
+                const showScheduleButton = document.getElementById("showSchedule");
+
                 headsignSelect.innerHTML = '<option value="">--Please choose an option--</option>'; // Reset the select menu
 
-                // Add the received trip headsign as an option
-                //const option = document.createElement("option");
-                //option.value = data.trip_headsign;
-                //option.text = data.trip_headsign;
-                //headsignSelect.appendChild(option);
                 data.trips_data.forEach(function (trip) {
                     const option = document.createElement("option");
                     option.value = trip.trip_id; // or trip.trip_headsign, depending on what you want to use as a value
                     option.text = trip.trip_headsign;
                     headsignSelect.appendChild(option);
                 });
+
+                // Enable the "Show the Schedule" button
+                showScheduleButton.disabled = false;
             }
 
 
