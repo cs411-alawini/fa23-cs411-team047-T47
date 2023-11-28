@@ -154,7 +154,6 @@ def index():
     #     return render_template('index.html')
     # return render_template('login.html')
     return render_template('index.html')
-    # return redirect(url_for('login.html'))
 
 # register function
 @app.route('/register', methods=['POST'])
