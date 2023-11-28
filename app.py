@@ -450,7 +450,34 @@ def post_comment():
 
     return jsonify({'message': 'Comment added or updated successfully'}), 201
 
+# get comment for each user
+@app.route('/get_user_comments', methods=['GET'])
+def get_user_comments():
+    email = request.args.get('email')  # Assuming user_id is passed as a query parameter
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
 
+    comments_query = text("""
+        SELECT route_id, crowdedness, safety, temperature, accessibility 
+        FROM Comment 
+        WHERE email = :email
+    """)
+    try:
+        with db.engine.connect() as connection:
+            comments = connection.execute(comments_query, {'email': email}).fetchall()
+            comments_data = {}
+            for c in comments:
+                route = f"Route {c.route_id}"
+                if route not in comments_data:
+                    comments_data[route] = {'crowdedness': [], 'safety': [], 'temperature': [], 'accessibility': []}
+                comments_data[route]['crowdedness'].append(c.crowdedness)
+                comments_data[route]['safety'].append(c.safety)
+                comments_data[route]['temperature'].append(c.temperature)
+                comments_data[route]['accessibility'].append(c.accessibility)
+            return jsonify(comments_data)
+    except Exception as e:
+        app.logger.error(f"Error in get_user_comments: {e}")
+        return jsonify({'error': 'Database operation failed'}), 500
 
 
 if __name__ == '__main__':

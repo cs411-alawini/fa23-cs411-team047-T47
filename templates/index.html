@@ -183,16 +183,40 @@
         </div>
 
         <!-- Manage comment for each user -->
-        <div id="comment" style="display:none;">
+        <div id="comment" style="display:block;">
             <h2>Your Comments</h2>
             <div id="userCommentsDisplay">
-                <!-- show all of the user's comments for each route-->
-                <p><strong>route101:</strong> Great service on Route 101!</p>
-                <button id="updateComment">Update</button>
-                <button id="deleteComment">delete</button>
-                <p><strong>route201:</strong> Bus was late today at Stop B.</p>
-                <button id="updateComment">Update</button>
-                <button id="deleteComment">delete</button>
+                <!-- Crowdedness comment -->
+                <div class="comment-section">
+                    <h3>Crowdedness</h3>
+                    <p id="crowdednessCommentsDisplay">Your comment about crowdedness.</p>
+                    <button class="updateComment" data-comment-type="crowdedness">Update</button>
+                    <button class="deleteComment" data-comment-type="crowdedness">Delete</button>
+                </div>
+
+                <!-- Safety comment -->
+                <div class="comment-section">
+                    <h3>Safety</h3>
+                    <p id="safetyCommentsDisplay">Your comment about safety.</p>
+                    <button class="updateComment" data-comment-type="safety">Update</button>
+                    <button class="deleteComment" data-comment-type="safety">Delete</button>
+                </div>
+
+                <!-- Temperature comment -->
+                <div class="comment-section">
+                    <h3>Temperature</h3>
+                    <p id="temperatureCommentsDisplay">Your comment about temperature.</p>
+                    <button class="updateComment" data-comment-type="temperature">Update</button>
+                    <button class="deleteComment" data-comment-type="temperature">Delete</button>
+                </div>
+
+                <!-- Accessibility comment -->
+                <div class="comment-section">
+                    <h3>Accessibility</h3>
+                    <p id="accessibilityCommentsDisplay">Your comment about accessibility.</p>
+                    <button class="updateComment" data-comment-type="accessibility">Update</button>
+                    <button class="deleteComment" data-comment-type="accessibility">Delete</button>
+                </div>
             </div>
         </div>
 
@@ -544,6 +568,11 @@
                 if (schedulePage) schedulePage.style.display = (page === 'schedulePage') ? 'block' : 'none';
                 if (mainContent) mainContent.style.display = (page === 'mainContent') ? 'block' : 'none';
                 if (commentPage) commentPage.style.display = (page === 'comment') ? 'block' : 'none';
+
+                // Check if we're navigating to the comments page and the user is logged in
+                if (page === 'comment' && isLoggedIn) {
+                    fetchUserComments(userEmail); // Fetch comments for the logged-in user
+                }
             }
 
             // Event listeners for navigation links
@@ -702,7 +731,56 @@
                 });
             });
 
-            
+            // Display comment of routes for each user
+            function fetchUserComments(email) {
+                console.log('Fetching comments for user:', email);
+                clearComments(); // Clear comments before fetching new ones
+
+                fetch(`/get_user_comments?email=${email}`)
+                    .then(response => response.json())
+                    .then(commentsByRoute => {
+                        Object.keys(commentsByRoute).forEach(route => {
+                            displayCommentsForRoute(route, commentsByRoute[route]);
+                        });
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+
+            function displayCommentsForRoute(route, comments) {
+                Object.keys(comments).forEach(commentType => {
+                    const commentsDisplay = document.querySelector(`#${commentType}CommentsDisplay`);
+
+                    if (commentsDisplay) {
+                        commentsDisplay.innerHTML = ''; // Clear previous comments
+
+                        // The received array has a single stringified array element.
+                        let commentArray = comments[commentType];
+
+                        // Check if the first element is a string and try to parse it.
+                        if (commentArray.length === 1 && typeof commentArray[0] === 'string') {
+                            try {
+                                commentArray = JSON.parse(commentArray[0]);
+                            } catch (e) {
+                                console.error('Parsing error:', e);
+                                commentArray = []; // Fallback to an empty array in case of an error
+                            }
+                        }
+
+                        // Now that we have ensured commentArray is an array, iterate over it
+                        commentArray.forEach(singleComment => {
+                            // Check if the comment is not just an empty string
+                            if (typeof singleComment === 'string' && singleComment.trim() !== "") {
+                                let p = document.createElement('p');
+                                p.textContent = `Route ${route.replace('Route ', '')}: ${singleComment}`;
+                                commentsDisplay.appendChild(p);
+                            }
+                        });
+                    } else {
+                        console.error(`${commentType}CommentsDisplay element not found`);
+                    }
+                });
+            }
+
             function updateMapWithNewStops(stops) {
                 // Clear previous markers if necessary
                 // ...
