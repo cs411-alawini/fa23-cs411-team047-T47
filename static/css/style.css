@@ -2,14 +2,17 @@ body {
     font-family: Arial, sans-serif;
     text-align: center;
 }
+
 #map {
     height: 400px;
     width: 80%;
     margin: 20px auto;
 }
+
 #addressForm, #resetMapButton {
     margin-top: 20px;
 }
+
 button {
     background-color: #4CAF50;
     color: white;
@@ -18,22 +21,12 @@ button {
     border-radius: 4px;
     cursor: pointer;
 }
+
 button:hover {
     background-color: #45a049;
 }
-input[type="text"] {
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-input[type="password"] {
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-input[type="email"] {
+
+input[type="text"], input[type="password"], input[type="email"] {
     padding: 10px;
     margin: 10px 0;
     border: 1px solid #ccc;
@@ -76,4 +69,91 @@ nav ul li a {
 
 nav ul li a:hover {
     background-color: #111;
+}
+
+#schedulePage {
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Table Styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px;
+    font-size: 1.1em;
+}
+
+td {
+    padding: 10px;
+    border-top: 1px solid #ddd;
+    font-size: 1em;
+}
+
+/* Button Enhancements */
+button {
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+/* Comment Section Styling under Schedule */
+#schedulePage .commentSubSection {
+    background-color: #f2f2f2;
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* General Comment Card Styling */
+.commentCard {
+    background-color: #ffffff;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.commentHeader {
+    font-size: 1em;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.commentBody {
+    font-size: 0.9em;
+    color: #555;
+    line-height: 1.5;
+}
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    width: 100%;
+    border: 1px solid #ddd;
+    font-weight: 100;
+}
+th, td {
+    text-align: left;
+    padding: 8px;
+    font-weight: 100;
+}
+
+
+/* Responsive design adjustments */
+@media screen and (max-width: 600px) {
+    #schedulePage .commentSubSection {
+        padding: 10px;
+        margin-top: 15px;
+    }
 }
