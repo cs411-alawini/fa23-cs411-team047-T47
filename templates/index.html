@@ -251,6 +251,7 @@
                 const infoWindow = new google.maps.InfoWindow();
 
                 for (let stop of busStops) {
+
                     const marker = new google.maps.Marker({
                         position: { lat: parseFloat(stop.stop_lat), lng: parseFloat(stop.stop_lon) },
                         map: map,
