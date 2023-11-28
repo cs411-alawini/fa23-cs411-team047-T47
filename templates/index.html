@@ -374,7 +374,6 @@
             function setNewCenter(newLat, newLng) {
                 var newCenter = new google.maps.LatLng(newLat, newLng);
                 map.setCenter(newCenter);
-                map.setZoom(16);
             }
 
             function onMapAndDataFullyLoaded() {
@@ -396,6 +395,10 @@
             document.getElementById('resetMapButton').addEventListener('click', function() {
                 clearMap(); // Clear the current map data
                 redrawStoredData(); // Redraw using stored data
+                // setNewCenter(-23.550520 -46.633308 );
+                const saoPaulo = { lat: -23.550520, lng: -46.633308 };
+                map.setCenter(saoPaulo);
+                map.setZoom(13);
             });
 
 
@@ -444,6 +447,7 @@
                         console.log(closeByRoutes);
                         clearMap();
                         setNewCenter(searchAddress.latitude, searchAddress.longitude);
+                        map.setZoom(16);
                         placeMarkers(closeByStops);
                         generateTable(closeByRoutes);
                     }
@@ -718,9 +722,19 @@
                 // Check if there is an existing table and remove it
                 const tableBody = document.getElementById('schedule-body');
 
-                if (tableBody.firstChild) {
+                while (tableBody.firstChild) {
                     tableBody.removeChild(tableBody.firstChild);
                 }
+
+                // Get the header row with all the stops
+                const headerRow = document.createElement('tr');
+                Object.keys(data[0]).forEach(stop => {
+                    const th = document.createElement('th');
+                    th.textContent = stop;
+                    headerRow.appendChild(th);
+                });
+                tableBody.appendChild(headerRow);
+
                 // Loop through the JSON data and create table rows
                 schedule.forEach(item => {
                     const row = document.createElement('tr');
