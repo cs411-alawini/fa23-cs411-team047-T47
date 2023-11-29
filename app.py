@@ -110,36 +110,33 @@ def setup_database():
         create_triggers()  # Create triggers
 
 def create_triggers():
-    # Drop the trigger if it already exists
-    db.engine.execute("DROP TRIGGER IF EXISTS before_comment_update;")
-    db.engine.execute("DROP TRIGGER IF EXISTS before_comment_delete;")
-    
-    # Create the update trigger
-    db.engine.execute("""
-    CREATE TRIGGER before_comment_update
-    BEFORE UPDATE ON Comment
-    FOR EACH ROW
-    BEGIN
-        INSERT INTO CommentHistory(email, route_id, crowdedness, safety, temperature, accessibility, action, action_time)
-        VALUES (OLD.email, OLD.route_id, OLD.crowdedness, OLD.safety, OLD.temperature, OLD.accessibility, 'update', NOW());
-    END;
-    """)
-
-    # Create the delete trigger
-    db.engine.execute("""
-    CREATE TRIGGER before_comment_delete
-    BEFORE DELETE ON Comment
-    FOR EACH ROW
-    BEGIN
-        INSERT INTO CommentHistory(email, route_id, crowdedness, safety, temperature, accessibility, action, action_time)
-        VALUES (OLD.email, OLD.route_id, OLD.crowdedness, OLD.safety, OLD.temperature, OLD.accessibility, 'delete', NOW());
-    END;
-    """)
+    # Use the session object from db to perform raw SQL operations
+    with db.session.begin():
+        db.session.execute(text("DROP TRIGGER IF EXISTS before_comment_update;"))
+        db.session.execute(text("""
+        CREATE TRIGGER before_comment_update
+        BEFORE UPDATE ON Comment
+        FOR EACH ROW
+        BEGIN
+            INSERT INTO CommentHistory(email, route_id, crowdedness, safety, temperature, accessibility, action, action_time)
+            VALUES (OLD.email, OLD.route_id, OLD.crowdedness, OLD.safety, OLD.temperature, OLD.accessibility, 'update', NOW());
+        END;
+        """))
+        db.session.execute(text("DROP TRIGGER IF EXISTS before_comment_delete;"))
+        db.session.execute(text("""
+        CREATE TRIGGER before_comment_delete
+        BEFORE DELETE ON Comment
+        FOR EACH ROW
+        BEGIN
+            INSERT INTO CommentHistory(email, route_id, crowdedness, safety, temperature, accessibility, action, action_time)
+            VALUES (OLD.email, OLD.route_id, OLD.crowdedness, OLD.safety, OLD.temperature, OLD.accessibility, 'delete', NOW());
+        END;
+        """))
 
 # Call the setup_database function when you are ready to initialize your database
-if __name__ == '__main__':
-    setup_database()
-    app.run(port=8000, debug=True)
+# if __name__ == '__main__':
+    # setup_database()
+    # app.run(port=8000, debug=True)
 
 
 # get the lat and log for the closeby bus stops
