@@ -778,6 +778,59 @@
                 });
             }
 
+            // Helper function to send a fetch request
+            function sendCommentRequest(endpoint, method, body) {
+                fetch(endpoint, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    // You might want to update the UI or give feedback to the user here
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+
+            // Update comment function for each category
+            function updateComment(email, routeId, category, commentText) {
+                sendCommentRequest('/update_comment', 'POST', {
+                    email: email,
+                    route_id: routeId,
+                    [category]: commentText
+                });
+            }
+
+            // Delete comment function for each category
+            function deleteComment(email, routeId, category) {
+                sendCommentRequest('/delete_comment', 'DELETE', {
+                    email: email,
+                    route_id: routeId,
+                    category: category // This may need to be adjusted based on how the backend handles it
+                });
+            }
+
+            // Event listeners for each comment category
+            document.querySelectorAll('.comment-category').forEach(categoryContainer => {
+                const email = categoryContainer.getAttribute('data-email');
+                const routeId = categoryContainer.getAttribute('data-route-id');
+                const category = categoryContainer.getAttribute('data-category');
+
+                categoryContainer.querySelector('.updateButton').addEventListener('click', () => {
+                    const commentText = categoryContainer.querySelector('.commentText').value;
+                    updateComment(email, routeId, category, commentText);
+                });
+
+                categoryContainer.querySelector('.deleteButton').addEventListener('click', () => {
+                    deleteComment(email, routeId, category);
+                });
+            });
+
             function updateMapWithNewStops(stops) {
                 // Clear previous markers if necessary
                 // ...

@@ -529,27 +529,27 @@ def get_user_comments():
         app.logger.error(f"Error in get_user_comments: {e}")
         return jsonify({'error': 'Database operation failed'}), 500
 
-# ... [rest of your imports and models]
 
 # Update comment function
 @app.route('/update_comment', methods=['POST'])
 def update_comment():
     data = request.get_json()
-    # Validate input
     if 'email' not in data or 'route_id' not in data:
         return jsonify({'error': 'Missing email or route_id'}), 400
+
+    update_query = text("""
+        UPDATE Comment 
+        SET crowdedness = :crowdedness, safety = :safety, 
+            temperature = :temperature, accessibility = :accessibility
+        WHERE email = :email AND route_id = :route_id
+    """)
     try:
-        # Perform update operation
-        comment = Comment.query.filter_by(email=data['email'], route_id=data['route_id']).first()
-        if comment:
-            comment.crowdedness = data.get('crowdedness', comment.crowdedness)
-            comment.safety = data.get('safety', comment.safety)
-            comment.temperature = data.get('temperature', comment.temperature)
-            comment.accessibility = data.get('accessibility', comment.accessibility)
-            db.session.commit()
-            return jsonify({'message': 'Comment updated successfully'}), 200
-        else:
-            return jsonify({'error': 'Comment not found'}), 404
+        with db.engine.connect() as connection:
+            result = connection.execute(update_query, data)
+            if result.rowcount > 0:
+                return jsonify({'message': 'Comment updated successfully'}), 200
+            else:
+                return jsonify({'error': 'Comment not found'}), 404
     except Exception as e:
         app.logger.error(f"Error in update_comment: {e}")
         return jsonify({'error': 'Database operation failed'}), 500
@@ -558,23 +558,24 @@ def update_comment():
 @app.route('/delete_comment', methods=['DELETE'])
 def delete_comment():
     data = request.get_json()
-    # Validate input
     if 'email' not in data or 'route_id' not in data:
         return jsonify({'error': 'Missing email or route_id'}), 400
+
+    delete_query = text("""
+        DELETE FROM Comment 
+        WHERE email = :email AND route_id = :route_id
+    """)
     try:
-        # Perform delete operation
-        comment = Comment.query.filter_by(email=data['email'], route_id=data['route_id']).first()
-        if comment:
-            db.session.delete(comment)
-            db.session.commit()
-            return jsonify({'message': 'Comment deleted successfully'}), 200
-        else:
-            return jsonify({'error': 'Comment not found'}), 404
+        with db.engine.connect() as connection:
+            result = connection.execute(delete_query, data)
+            if result.rowcount > 0:
+                return jsonify({'message': 'Comment deleted successfully'}), 200
+            else:
+                return jsonify({'error': 'Comment not found'}), 404
     except Exception as e:
         app.logger.error(f"Error in delete_comment: {e}")
         return jsonify({'error': 'Database operation failed'}), 500
 
-# ... [rest of your application code]
 
 
 
