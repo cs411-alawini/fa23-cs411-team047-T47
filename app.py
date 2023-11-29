@@ -103,6 +103,44 @@ class Comment(db.Model):
 GEOCODING_API_URL = 'https://maps.googleapis.com/maps/api/geocode/json'
 GEOCODING_API_KEY = 'AIzaSyBS-S37L58YssF52HQocELjBEI4s1-NSiM'
 
+# Define a function to create triggers
+def setup_database():
+    with app.app_context():
+        db.create_all()  # Create tables
+        create_triggers()  # Create triggers
+
+def create_triggers():
+    # Drop the trigger if it already exists
+    db.engine.execute("DROP TRIGGER IF EXISTS before_comment_update;")
+    db.engine.execute("DROP TRIGGER IF EXISTS before_comment_delete;")
+    
+    # Create the update trigger
+    db.engine.execute("""
+    CREATE TRIGGER before_comment_update
+    BEFORE UPDATE ON Comment
+    FOR EACH ROW
+    BEGIN
+        INSERT INTO CommentHistory(email, route_id, crowdedness, safety, temperature, accessibility, action, action_time)
+        VALUES (OLD.email, OLD.route_id, OLD.crowdedness, OLD.safety, OLD.temperature, OLD.accessibility, 'update', NOW());
+    END;
+    """)
+
+    # Create the delete trigger
+    db.engine.execute("""
+    CREATE TRIGGER before_comment_delete
+    BEFORE DELETE ON Comment
+    FOR EACH ROW
+    BEGIN
+        INSERT INTO CommentHistory(email, route_id, crowdedness, safety, temperature, accessibility, action, action_time)
+        VALUES (OLD.email, OLD.route_id, OLD.crowdedness, OLD.safety, OLD.temperature, OLD.accessibility, 'delete', NOW());
+    END;
+    """)
+
+# Call the setup_database function when you are ready to initialize your database
+if __name__ == '__main__':
+    setup_database()
+    app.run(port=8000, debug=True)
+
 
 # get the lat and log for the closeby bus stops
 @app.route('/geocode', methods=['POST'])
@@ -493,6 +531,54 @@ def get_user_comments():
     except Exception as e:
         app.logger.error(f"Error in get_user_comments: {e}")
         return jsonify({'error': 'Database operation failed'}), 500
+
+# ... [rest of your imports and models]
+
+# Update comment function
+@app.route('/update_comment', methods=['POST'])
+def update_comment():
+    data = request.get_json()
+    # Validate input
+    if 'email' not in data or 'route_id' not in data:
+        return jsonify({'error': 'Missing email or route_id'}), 400
+    try:
+        # Perform update operation
+        comment = Comment.query.filter_by(email=data['email'], route_id=data['route_id']).first()
+        if comment:
+            comment.crowdedness = data.get('crowdedness', comment.crowdedness)
+            comment.safety = data.get('safety', comment.safety)
+            comment.temperature = data.get('temperature', comment.temperature)
+            comment.accessibility = data.get('accessibility', comment.accessibility)
+            db.session.commit()
+            return jsonify({'message': 'Comment updated successfully'}), 200
+        else:
+            return jsonify({'error': 'Comment not found'}), 404
+    except Exception as e:
+        app.logger.error(f"Error in update_comment: {e}")
+        return jsonify({'error': 'Database operation failed'}), 500
+
+# Delete comment function
+@app.route('/delete_comment', methods=['DELETE'])
+def delete_comment():
+    data = request.get_json()
+    # Validate input
+    if 'email' not in data or 'route_id' not in data:
+        return jsonify({'error': 'Missing email or route_id'}), 400
+    try:
+        # Perform delete operation
+        comment = Comment.query.filter_by(email=data['email'], route_id=data['route_id']).first()
+        if comment:
+            db.session.delete(comment)
+            db.session.commit()
+            return jsonify({'message': 'Comment deleted successfully'}), 200
+        else:
+            return jsonify({'error': 'Comment not found'}), 404
+    except Exception as e:
+        app.logger.error(f"Error in delete_comment: {e}")
+        return jsonify({'error': 'Database operation failed'}), 500
+
+# ... [rest of your application code]
+
 
 
 @app.route('/get_route_and_trip_info', methods=['GET'])
