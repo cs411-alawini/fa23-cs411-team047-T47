@@ -341,15 +341,33 @@ def get_route_and_stops():
         JOIN Trips ON Arrival.trip_id = Trips.trip_id 
         WHERE Trips.shape_id = :shape_id
     """)
+    # routes_query = text("SELECT route_id FROM `Trips` WHERE shape_id = :shape_id")
+    # try:
+    #     with db.engine.connect() as connection:
+    #         route_shape = connection.execute(shape_query, {'shape_id': shape_id}).fetchall()
+    #         shape_points = [{'lat': point.shape_pt_lat, 'lng': point.shape_pt_lon} for point in route_shape]
+
+    #         bus_stops = connection.execute(stops_query, {'shape_id': shape_id}).fetchall()
+    #         route_id = connection.execute(routes_query, {'shape_id': shape_id}).fetchall()
+    #         print(route_id[0][0])
+    #         stops = [{'stop_name': stop.stop_name, 'stop_lat': stop.stop_lat, 'stop_lon': stop.stop_lon} for stop in bus_stops]
+            
+    #         return jsonify({'route_id': shape_id, 'shape': shape_points, 'stops': stops})
+    # except Exception as e:
+    #     app.logger.error(f"Error in get_route_and_stops: {e}")
+    #     return jsonify({'error': 'Database operation failed'}), 500
+
+    routes_query = text("SELECT route_id FROM `Trips` WHERE shape_id = :shape_id")
     try:
         with db.engine.connect() as connection:
             route_shape = connection.execute(shape_query, {'shape_id': shape_id}).fetchall()
             shape_points = [{'lat': point.shape_pt_lat, 'lng': point.shape_pt_lon} for point in route_shape]
             
             bus_stops = connection.execute(stops_query, {'shape_id': shape_id}).fetchall()
+            route_id = connection.execute(routes_query, {'shape_id': shape_id}).fetchall()
             stops = [{'stop_name': stop.stop_name, 'stop_lat': stop.stop_lat, 'stop_lon': stop.stop_lon} for stop in bus_stops]
             
-            return jsonify({'route_id': shape_id, 'shape': shape_points, 'stops': stops})
+            return jsonify({'route_id': route_id[0][0], 'shape_id': shape_id, 'shape': shape_points, 'stops': stops})
     except Exception as e:
         app.logger.error(f"Error in get_route_and_stops: {e}")
         return jsonify({'error': 'Database operation failed'}), 500

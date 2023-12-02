@@ -63,6 +63,13 @@
                 </table>
             </div>
 
+            <div id="routeSelected" style="display: none;">
+                <p style="font-size: 1.1em;font-weight: 550; "> Route ID: </p>
+                <p id = rIDSelected> </p>
+                <p id="linkToSchedule" style="cursor: pointer; color: blue; text-decoration: underline;"> More information and Schedule</p>
+            </div>
+
+
             <button id="resetMapButton">Reset Map</button>
             
             <form id="addressForm">
@@ -109,8 +116,6 @@
                     <button id="showSchedule" disabled>Show the schedule</button>
 
                 </form>
-                <!-- Button for test case -->
-                <!-- button id = "showSchedule"></button> -->
                 <div style="overflow-x:auto;">
                     <table border="1">
                        
@@ -215,6 +220,19 @@
 
 
         <script>
+            document.getElementById("linkToSchedule").addEventListener("click", function() {
+                // Redirect to the other page
+                navigateTo('schedulePage');
+                rID = document.getElementById("rIDSelected").textContent;
+                document.getElementById("route_id").value = rID;
+                document.getElementById("find").click();
+            });
+
+            // Dislay the route being selected 
+            function routeSelected(r){
+                document.getElementById("rIDSelected").textContent = r;
+                document.getElementById("routeSelected").style.display = 'block';
+            }
             // Custom map styles to hide default bus stops
             const mapStyles = [
                 {
@@ -263,12 +281,15 @@
                 clearMap();
                 redrawStoredData();
 
-                // Check if there is an existing table and remove it
+                // Check if there is an existing close-by route table and remove it
                 const tableBody = document.getElementById('close-by-routes');
 
                 if (tableBody.firstChild) {
                     tableBody.removeChild(tableBody.firstChild);
                 }
+                
+                // If previously selected a route
+                document.getElementById("routeSelected").style.display = "none";
             });
             
             
@@ -364,9 +385,14 @@
                     .then(response => response.json())
                     .then(data => {
                         clearMap(); // You might need to create this function to clear existing routes and stops
-                        drawShapeOnMap(data.shape, data.route_id);
+                        // drawShapeOnMap(data.shape, data.route_id);
+                        // placeMarkers(data.stops);
+                        // console.log(data.route_id);
+                        drawShapeOnMap(data.shape, data.shape_id);
                         placeMarkers(data.stops);
-                        console.log(data.stops);
+                        console.log(data.route_id);
+                        routeSelected(data.route_id)
+
                     })
                     .catch(error => console.error('Error:', error));
             }
@@ -573,15 +599,48 @@
             }
 
             // Event listeners for navigation links
-            document.getElementById('navLogin').addEventListener('click', () => navigateTo('loginPage'));
+            document.getElementById('navLogin').addEventListener("click", function () {
+                resetSchedulePage();
+                navigateTo('loginPage');
+                clearMap();
+                redrawStoredData();
+
+                // Check if there is an existing close-by route table and remove it
+                const tableBody = document.getElementById('close-by-routes');
+
+                if (tableBody.firstChild) {
+                    tableBody.removeChild(tableBody.firstChild);
+                }
+                
+                // If previously selected a route
+                document.getElementById("routeSelected").style.display = "none";
+            });
             document.getElementById('navSchedule').addEventListener('click', () => navigateTo('schedulePage'));
-            document.getElementById('navMainContent').addEventListener('click', () => navigateTo('mainContent'));
-            document.getElementById('navComment').addEventListener('click', () => navigateTo('comment'));
+            document.getElementById('navMainContent').addEventListener("click", function () {
+                resetSchedulePage();
+                navigateTo('mainContent');
+            });
+            document.getElementById('navComment').addEventListener("click", function () {
+                resetSchedulePage();
+                navigateTo('comment');
+            });
+
+            // Reset the scedule page 
+            function resetSchedulePage() {
+                // Reset forms
+                document.getElementById("routeForm").reset();
+                document.getElementById("directionForm").reset();
+                document.getElementById('schedule-body').style.display = 'none';
+                const table = document.getElementById('routeInfoTable');
+                // Clear existing data
+                table.innerHTML = `
+                    <tr>
+                        <th>Route ID</th>
+                        <th>Route Name</th>
+                        <th>Fare</th>
+                    </tr>`;
+            }
             
-
-            
-
-
             // Handle Registration Form Submission
             document.getElementById('registrationForm').addEventListener('submit', function(event) {
                 event.preventDefault();
@@ -778,16 +837,6 @@
                 });
             }
 
-            function updateMapWithNewStops(stops) {
-                // Clear previous markers if necessary
-                // ...
-
-                // Add new markers
-                for (let stop of stops) {
-                    // Your existing code to place markers
-                }
-            }
-
             document.addEventListener("DOMContentLoaded", function () {
                 document.getElementById("routeForm").addEventListener("submit", function (e) {
                     e.preventDefault(); // Prevents form submission
@@ -803,32 +852,30 @@
             });
 
             function fetchRouteTripInfo(routeId) {
-    document.getElementById("showSchedule").disabled = true;
-    const errorMessageElement = document.getElementById('error-message');
-    const headsignSelect = document.getElementById("headsign_select");
+                document.getElementById("showSchedule").disabled = true;
+                const errorMessageElement = document.getElementById('error-message');
+                const headsignSelect = document.getElementById("headsign_select");
 
-    fetch(`/get_route_and_trip_info?route_id=${routeId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                console.error('Error fetching route info:', data.error);
-                errorMessageElement.textContent = 'Error: ' + data.error;
-                // Reset the "Choose direction" selection field
-                headsignSelect.innerHTML = '<option value="">--Please choose an option--</option>';
-            } else {
-                errorMessageElement.textContent = ''; // Clear any existing error message
-                populateHeadsignOption(data);
+                fetch(`/get_route_and_trip_info?route_id=${routeId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            console.error('Error fetching route info:', data.error);
+                            errorMessageElement.textContent = 'Error: ' + data.error;
+                            // Reset the "Choose direction" selection field
+                            headsignSelect.innerHTML = '<option value="">--Please choose an option--</option>';
+                        } else {
+                            errorMessageElement.textContent = ''; // Clear any existing error message
+                            populateHeadsignOption(data);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        errorMessageElement.textContent = 'An error occurred while fetching data.';
+                        // Reset the "Choose direction" selection field
+                        headsignSelect.innerHTML = '<option value="">--Please choose an option--</option>';
+                    });
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            errorMessageElement.textContent = 'An error occurred while fetching data.';
-            // Reset the "Choose direction" selection field
-            headsignSelect.innerHTML = '<option value="">--Please choose an option--</option>';
-        });
-}
-
-
 
             function populateHeadsignOption(data) {
                 const headsignSelect = document.getElementById("headsign_select");
@@ -878,6 +925,8 @@
                     });
                     tableBody.appendChild(row);
                 });
+
+                document.getElementById('schedule-body').style.display = 'block';
             }
 
 

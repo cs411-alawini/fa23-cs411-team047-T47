@@ -2,6 +2,7 @@ import mysql.connector
 import math
 from datetime import datetime
 import numpy as np
+from sqlalchemy import text
 
 # Get the new coordinates of the 400 meter boundary of given address
 def calculate_new_coordinates(lat, lon, bearing_degrees):
