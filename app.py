@@ -403,10 +403,13 @@ def get_route_info():
         WHERE Route.route_id = :route_id;
     """)
 
+    
+
     # Execute the query
     try:
         with db.engine.connect() as connection:
             result = connection.execute(sql_query, {'route_id': route_id}).first()
+            print(result)
             if result:
                 return jsonify({
                     'route_id': result.route_id, 
@@ -473,16 +476,18 @@ def post_comment():
 
             # Advanced Query 1: LEFT JOIN, WHERE clause, and Aggregation
             existing_comment_query = text("""
-                SELECT c1.crowdedness, c1.safety, c1.temperature, c1.accessibility, COUNT(c3.route_id) AS route_comment_count
+                SELECT c1.crowdedness, c1.safety, c1.temperature, c1.accessibility
                 FROM Comment c1
-                LEFT JOIN Comment c2 ON c1.email = c2.email AND c2.route_id != :route_id
-                LEFT JOIN Comment c3 ON c1.route_id = c3.route_id
-                WHERE c1.email = :email AND c1.route_id = :route_id AND c2.email IS NULL
-                GROUP BY c1.crowdedness, c1.safety, c1.temperature, c1.accessibility
+                
+                WHERE c1.email = :email AND c1.route_id = :route_id
+                
             """)
 
             
             existing_comment = connection.execute(existing_comment_query, {'email': email, 'route_id': route_id}).first()
+            
+            print("check")
+            print(existing_comment)
 
             if existing_comment:
 
@@ -550,11 +555,16 @@ def get_user_comments():
     try:
         with db.engine.connect() as connection:
             comments = connection.execute(comments_query, {'email': email}).fetchall()
+            print(comments)
             comments_data = {}
+            print("end")
             for c in comments:
                 route = f"Route {c.route_id}"
+                print(route)
+                print(comments_data)
                 if route not in comments_data:
                     comments_data[route] = {'crowdedness': [], 'safety': [], 'temperature': [], 'accessibility': []}
+
                 comments_data[route]['crowdedness'].append(c.crowdedness)
                 comments_data[route]['safety'].append(c.safety)
                 comments_data[route]['temperature'].append(c.temperature)

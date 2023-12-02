@@ -181,7 +181,7 @@
         </div>
 
         <!-- Manage comment for each user -->
-        <div id="comment" style="display:block;">
+        <div id="comment" style="display:none;">
             <h2>Your Comments</h2>
             <div id="userCommentsDisplay">
                 <!-- Display comments for each category -->
@@ -274,6 +274,7 @@
             let closeByRoutes = [];
             let isLoggedIn = false; // Flag to track login status
             let userEmail = ''; // Global variable to store the user's email
+            let current_route_id = ''; // Global variable to store the current route id
 
 
             // clear the current routes and bus stops in the maps
@@ -700,6 +701,7 @@
 
             
             function fetchRouteInfo(routeId) {
+            console.log(routeId);
             fetch(`/get_route_info?route_id=${routeId}`)
                 .then(response => response.json())
                 .then(data => {
@@ -799,7 +801,10 @@
                     const commentBox = this.previousElementSibling;
                     const commentText = commentBox.value;
                     const commentType = this.getAttribute('data-type');
-                    const routeId = '1012-10'; // Replace with the actual route ID
+                    const routeId = current_route_id;
+
+                    console.log(`Submitting comment: ${commentText} for route ${routeId}`);
+                    console.log(routeId);
                     
                     if (commentText.trim()) {
                         postComment(routeId, commentType, commentText, userEmail);
@@ -828,7 +833,7 @@
             function displayCommentsForRoute(route, comments) {
                 Object.keys(comments).forEach(commentType => {
                     const commentsDisplay = document.querySelector(`#${commentType}CommentsDisplay`);
-
+                    
                     if (commentsDisplay) {
                         commentsDisplay.innerHTML = ''; // Clear previous comments
 
@@ -845,8 +850,13 @@
                             }
                         }
 
+                        // console.log(commentArray);
+
+                        console.log(commentArray);
+
                         // Now that we have ensured commentArray is an array, iterate over it
                         commentArray.forEach(singleComment => {
+                            console.log(singleComment);
                             // Check if the comment is not just an empty string
                             if (typeof singleComment === 'string' && singleComment.trim() !== "") {
                                 let p = document.createElement('p');
@@ -994,6 +1004,7 @@
                 document.getElementById("showSchedule").disabled = true;
                 const errorMessageElement = document.getElementById('error-message');
                 const headsignSelect = document.getElementById("headsign_select");
+                const route = document.getElementById("route_id").value;
 
                 fetch(`/get_route_and_trip_info?route_id=${routeId}`)
                     .then(response => response.json())
@@ -1003,6 +1014,10 @@
                             errorMessageElement.textContent = 'Error: ' + data.error;
                             // Reset the "Choose direction" selection field
                             headsignSelect.innerHTML = '<option value="">--Please choose an option--</option>';
+                            // get route comment
+                            
+                            
+                            fetchRouteInfo(current_route_id);
                         } else {
                             errorMessageElement.textContent = ''; // Clear any existing error message
                             populateHeadsignOption(data);
@@ -1015,6 +1030,7 @@
                         headsignSelect.innerHTML = '<option value="">--Please choose an option--</option>';
                     });
             }
+            
 
             function populateHeadsignOption(data) {
                 const headsignSelect = document.getElementById("headsign_select");
@@ -1092,6 +1108,9 @@
                 let selectedDirection = document.getElementById("headsign_select").value;
                 console.log(selectedDirection);
                 let schedule = [];
+                let route_id = document.getElementById("route_id").value;
+                current_route_id = route_id;
+
                 fetch('/post_schedule', {
                     method: 'POST',
                     headers: {
@@ -1110,6 +1129,7 @@
                         generateSchedule(data);
 
                         // also populate the route info as well as the comments
+
                         fetchRouteInfo(route_id);
                         fetchComments(route_id);
                         
