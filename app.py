@@ -9,6 +9,9 @@ import mysql.connector
 from ConnectionDB import *
 from werkzeug.security import generate_password_hash, check_password_hash
 
+
+import logging
+
 app = Flask(__name__)
 app.secret_key = 't47'  # Set a secret key for secure sessions
 
@@ -544,8 +547,8 @@ def get_comments():
 @app.route('/post_comment', methods=['POST'])
 def post_comment():
     data = request.get_json()
-    email = data['email']
-    route_id = data['route_id']
+    email = data.get('email')
+    route_id = data.get('route_id')
     crowdedness = data.get('crowdedness', '')
     safety = data.get('safety', '')
     temperature = data.get('temperature', '')
@@ -553,23 +556,34 @@ def post_comment():
 
     try:
         with db.engine.connect() as connection:
-            result = connection.execute(
-                text("CALL PostUserComment(:email, :route_id, :crowdedness, :safety, :temperature, :accessibility)"),
-                {'email': email, 'route_id': route_id, 'crowdedness': crowdedness, 'safety': safety, 'temperature': temperature, 'accessibility': accessibility}
+            # Call stored procedure and set @status
+            connection.execute(
+                text("CALL PostUserComment(:email, :route_id, :crowdedness, :safety, :temperature, :accessibility, @status)"),
+                {
+                    'email': email, 
+                    'route_id': route_id, 
+                    'crowdedness': crowdedness, 
+                    'safety': safety, 
+                    'temperature': temperature, 
+                    'accessibility': accessibility
+                }
             )
-            app.logger.info(f"Stored Procedure Result: {result}")
 
-            # commit the result
             connection.commit()
-            # You might also log `result.rowcount` or other attributes depending on your driver
 
-        return jsonify({'message': 'Comment added or updated successfully'}), 201
+            # Get the status from the stored procedure
+            status_result = connection.execute(text("SELECT @status")).fetchone()[0]
+            app.logger.info(f"Stored Procedure Status: {status_result}")
+
+            if status_result == 0:
+                return jsonify({'message': 'Comment processed successfully'}), 200
+            elif status_result == 1:
+                return jsonify({'message': 'Duplicate comment not added'}), 409
+            else:
+                return jsonify({'message': 'An unknown error occurred'}), 500
     except Exception as e:
         app.logger.error(f"Error in post_comment: {e}")
-        return jsonify({'error': 'Database operation failed'}), 500
-
-
-
+        return jsonify({'error': 'Database operation failed', 'detail': str(e)}), 500
 
 
 # get comment for each user
@@ -611,7 +625,6 @@ def get_user_comments():
 @app.route('/update_comment', methods=['POST'])
 def update_comment():
     data = request.get_json()
-    print("asdfasfasdfsadfjsaklfdj")
     print(data)
     email = data['email']
     route_id = data['route_id']

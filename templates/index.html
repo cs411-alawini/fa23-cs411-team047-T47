@@ -782,20 +782,31 @@
                     },
                     body: JSON.stringify(commentData)
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        console.error('Error posting comment:', data.error);
-                    } else {
-                        alert('Comment posted successfully');
-                        console.log(routeId);
-                        console.log(data);
-                        fetchComments(routeId); // Refresh comments
-                        fetchRouteInfo(routeId); // Refresh route info
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status === 409) {
+                            // Handle duplicate comment case
+                            alert("Duplicate comment detected. Comment not added.");
+                        } else {
+                            // Handle other errors
+                            alert("Error posting comment.");
+                        }
+                        return Promise.reject(response);
                     }
+                    return response.json();
                 })
-                .catch(error => console.error('Error:', error));
+                .then(data => {
+                    alert('Comment posted successfully');
+                    console.log(routeId);
+                    console.log(data);
+                    fetchComments(routeId); // Refresh comments
+                    fetchRouteInfo(routeId); // Refresh route info
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
             }
+
 
             // Attach event listeners to comment submission buttons
             document.querySelectorAll('.submitComment').forEach(button => {
