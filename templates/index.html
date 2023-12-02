@@ -884,19 +884,23 @@
                 const category = document.querySelector('[name="category"]').value;
                 const originalComment = document.querySelector('[name="originalComment"]').value;
                 const updatedComment = document.querySelector('[name="updatedComment"]').value;
-
-                updateComment(currentUserEmail, routeId, category, originalComment, updatedComment);
+                
+                console.log(userEmail);
+                updateComment(routeId, category, originalComment, updatedComment);
             });
 
-            function updateComment(email, routeId, category, originalComment, updatedComment) {
+            function updateComment(routeId, category, originalComment, updatedComment) {
                 const data = {
+                    email: userEmail,
                     route_id: routeId,
                     category: category,
                     originalComment: originalComment,
                     comment: updatedComment
                 };
 
-                fetch(`/update_comment?email=${encodeURIComponent(email)}`, {
+                console.log(data);
+
+                fetch(`/update_comment`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -913,7 +917,7 @@
                     // Handle error
                 });
             }
-           /* 
+            
             let currentUserEmail1 = ''; // Global variable to store the user's email
 
             function fetchUserComments(email) {
@@ -968,7 +972,7 @@
                     // Handle error
                 });
             }
-*/
+
 
 
 

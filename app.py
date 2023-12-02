@@ -568,12 +568,17 @@ def get_user_comments():
 # Update comment function
 @app.route('/update_comment', methods=['POST'])
 def update_comment():
-    email = request.args.get('email')  # Retrieved from query parameters
     data = request.get_json()
+    print("asdfasfasdfsadfjsaklfdj")
+    print(data)
+    email = data['email']
     route_id = data['route_id']
     new_comment = data['comment']
     original_comment = data['originalComment']
     category = data['category'].lower()
+
+    print('asdfsd')
+    print(email)
 
     if category not in ['crowdedness', 'safety', 'temperature', 'accessibility']:
         return jsonify({'error': 'Invalid category'}), 400
@@ -590,9 +595,10 @@ def update_comment():
             """)
 
             existing_comment_result = connection.execute(existing_comment_query, {'email': email, 'route_id': route_id}).first()
-
+            
             if existing_comment_result and existing_comment_result[0]:
                 existing_comments = json.loads(existing_comment_result[0])
+                print(existing_comments)
                 if original_comment in existing_comments:
                     # Replace original comment with new comment
                     index = existing_comments.index(original_comment)
@@ -618,11 +624,14 @@ def update_comment():
         app.logger.error(f"Error in update_comment: {e}")
         return jsonify({'error': 'Database operation failed', 'detail': str(e)}), 500
 
-'''
+
 # Delete comment function
 @app.route('/delete_comment', methods=['POST'])
 def delete_comment():
     data = request.get_json()
+
+
+    print(data)
     
     if not data:
         return jsonify({'error': 'Request body is empty or not JSON'}), 400
@@ -636,25 +645,37 @@ def delete_comment():
     email = data['email']
     route_id = data['route_id']
     category = data['category'].lower()
+
+    category = category[:-1]
+
+    print(category)
+
     if category not in ['crowdedness', 'safety', 'temperature', 'accessibility']:
         return jsonify({'error': 'Invalid category'}), 400
 
        # Initialize delete_result outside of try-except block
     delete_result = None
 
+    null_comment = '[""]'
+
     try:
         with db.engine.connect() as connection:
             delete_query = text(f"""
                 UPDATE Comment 
-                SET {category} = NULL
+                SET {category} = :null_comment
                 WHERE email = :email AND route_id = :route_id
             """)
             app.logger.info(f"Attempting to set category '{category}' to NULL for email '{email}' and route_id '{route_id}'")
 
-            delete_result = connection.execute(delete_query, {'email': email, 'route_id': route_id})
+            delete_result = connection.execute(delete_query, {'null_comment':null_comment, 'email': email, 'route_id': route_id})
             
+            # commit the result
+            connection.commit()
+
+            print(delete_result)
             # Move the conditional statements inside the try block
             if delete_result.rowcount > 0:
+                connection.commit()
                 return jsonify({'message': f'{category.title()} comment deleted successfully'}), 200
             else:
                 #Check if the category is already NULL for the given email and route_id
@@ -664,6 +685,7 @@ def delete_comment():
                 """)
                 existing_category = connection.execute(check_query, {'email': email, 'route_id': route_id}).fetchone()
                 if existing_category and existing_category[0] is None:
+                    connection.commit()
                     return jsonify({'message': f'No update necessary. {category.title()} comment is already empty'}), 200
                 else:
                     return jsonify({'error': 'No comment found for the specified category'}), 404
@@ -671,7 +693,7 @@ def delete_comment():
         detailed_error = str(e)
         app.logger.error(f"Error in delete_comment: {detailed_error}")
         return jsonify({'error': 'Database operation failed', 'detail': detailed_error}), 500
-'''
+
 
 
 
