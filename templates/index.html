@@ -184,39 +184,62 @@
         <div id="comment" style="display:block;">
             <h2>Your Comments</h2>
             <div id="userCommentsDisplay">
-                <!-- Crowdedness comment -->
+                <!-- Display comments for each category -->
                 <div class="comment-section">
                     <h3>Crowdedness</h3>
                     <p id="crowdednessCommentsDisplay">Your comment about crowdedness.</p>
-                    <button class="updateComment" data-comment-type="crowdedness">Update</button>
-                    <button class="deleteComment" data-comment-type="crowdedness">Delete</button>
                 </div>
-
-                <!-- Safety comment -->
                 <div class="comment-section">
                     <h3>Safety</h3>
                     <p id="safetyCommentsDisplay">Your comment about safety.</p>
-                    <button class="updateComment" data-comment-type="safety">Update</button>
-                    <button class="deleteComment" data-comment-type="safety">Delete</button>
                 </div>
-
-                <!-- Temperature comment -->
                 <div class="comment-section">
                     <h3>Temperature</h3>
                     <p id="temperatureCommentsDisplay">Your comment about temperature.</p>
-                    <button class="updateComment" data-comment-type="temperature">Update</button>
-                    <button class="deleteComment" data-comment-type="temperature">Delete</button>
                 </div>
-
-                <!-- Accessibility comment -->
                 <div class="comment-section">
                     <h3>Accessibility</h3>
                     <p id="accessibilityCommentsDisplay">Your comment about accessibility.</p>
-                    <button class="updateComment" data-comment-type="accessibility">Update</button>
-                    <button class="deleteComment" data-comment-type="accessibility">Delete</button>
                 </div>
             </div>
+
+            <!-- Update Comment Section -->
+            <div id="updateComment">
+                <h2>Update Comment</h2>
+                <form id="updateForm">
+                    Route ID: <input type="text" name="routeId" required><br>
+                    Original Comment:<br>
+                    <textarea name="originalComment" required></textarea><br>
+                    Updated Comment:<br>
+                    <textarea name="updatedComment" required></textarea><br>
+                    Category:
+                    <select name="category">
+                        <option value="crowdedness">Crowdedness</option>
+                        <option value="safety">Safety</option>
+                        <option value="temperature">Temperature</option>
+                        <option value="accessibility">Accessibility</option>
+                    </select><br>
+                    <button type="submit">Update</button>
+                </form>
+            </div>
+
+            <!-- Delete Comment Section -->
+            <div id="deleteComment">
+                <h2>Delete Comment</h2>
+                <form id="deleteForm">
+                    Route ID: <input type="text" name="routeId1" required><br>
+                    Category:
+                    <select name="category1">
+                        <option value="crowdedness1">Crowdedness</option>
+                        <option value="safety1">Safety</option>
+                        <option value="temperature1">Temperature</option>
+                        <option value="accessibility1">Accessibility</option>
+                    </select><br>
+                    <button type="submit">Delete</button>
+                </form>
+            </div>
         </div>
+
 
 
         <script>
@@ -836,6 +859,118 @@
                     }
                 });
             }
+            
+            let currentUserEmail = ''; // Global variable to store the user's email
+
+            function fetchUserComments(email) {
+                console.log('Fetching comments for user:', email);
+                currentUserEmail = email; // Store the user's email
+                clearComments(); // Your existing code...
+                fetch(`/get_user_comments?email=${email}`)
+                    .then(response => response.json())
+                    .then(commentsByRoute => {
+                        Object.keys(commentsByRoute).forEach(route => {
+                            displayCommentsForRoute(route, commentsByRoute[route]);
+                        });
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+
+            document.getElementById('updateForm').addEventListener('submit', function(event) {
+                event.preventDefault(); // Prevent the default form submission
+
+                // Retrieve values from the form
+                const routeId = document.querySelector('[name="routeId"]').value;
+                const category = document.querySelector('[name="category"]').value;
+                const originalComment = document.querySelector('[name="originalComment"]').value;
+                const updatedComment = document.querySelector('[name="updatedComment"]').value;
+
+                updateComment(currentUserEmail, routeId, category, originalComment, updatedComment);
+            });
+
+            function updateComment(email, routeId, category, originalComment, updatedComment) {
+                const data = {
+                    route_id: routeId,
+                    category: category,
+                    originalComment: originalComment,
+                    comment: updatedComment
+                };
+
+                fetch(`/update_comment?email=${encodeURIComponent(email)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Success:', data);
+                    // Handle success
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    // Handle error
+                });
+            }
+           /* 
+            let currentUserEmail1 = ''; // Global variable to store the user's email
+
+            function fetchUserComments(email) {
+                console.log('Fetching comments for user:', email);
+                currentUserEmail1 = email; // Store the user's email
+                clearComments(); // Your existing code...
+                fetch(`/get_user_comments?email=${email}`)
+                    .then(response => response.json())
+                    .then(commentsByRoute => {
+                        Object.keys(commentsByRoute).forEach(route => {
+                            displayCommentsForRoute(route, commentsByRoute[route]);
+                        });
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+
+            document.getElementById('deleteForm').addEventListener('submit', function(event) {
+                event.preventDefault(); // Prevent the default form submission
+
+                const routeId1 = document.querySelector('[name="routeId1"]').value;
+                const category1 = document.querySelector('[name="category1"]').value;
+                console.log(`Form submission with routeId: ${routeId1}, category: ${category1}`);
+                deleteComment(currentUserEmail1, routeId1, category1);
+            });
+
+            function deleteComment(email, routeId, category) {
+                const data = {
+                    email: email,
+                    route_id: routeId,
+                    category: category
+                };
+
+                fetch('/delete_comment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Success:', data);
+                    // Handle success
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    // Handle error
+                });
+            }
+*/
+
+
 
             document.addEventListener("DOMContentLoaded", function () {
                 document.getElementById("routeForm").addEventListener("submit", function (e) {

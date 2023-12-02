@@ -103,35 +103,52 @@ class Comment(db.Model):
 GEOCODING_API_URL = 'https://maps.googleapis.com/maps/api/geocode/json'
 GEOCODING_API_KEY = 'AIzaSyBS-S37L58YssF52HQocELjBEI4s1-NSiM'
 
-# Define a function to create triggers
-def setup_database():
-    with app.app_context():
-        db.create_all()  # Create tables
-        create_triggers()  # Create triggers
+class CommentHistory(db.Model):
+    __tablename__ = 'CommentHistory'
+
+    id = db.Column(db.Integer, primary_key=True)  # Primary key
+    email = db.Column(db.String(255))
+    route_id = db.Column(db.String(255))
+    crowdedness = db.Column(db.Text)
+    safety = db.Column(db.Text)
+    temperature = db.Column(db.Text)
+    accessibility = db.Column(db.Text)
+    action = db.Column(db.String(255))
+    action_time = db.Column(db.DateTime, default=db.func.current_timestamp())
+
 
 def create_triggers():
     # Use the session object from db to perform raw SQL operations
-    with db.session.begin():
-        db.session.execute(text("DROP TRIGGER IF EXISTS before_comment_update;"))
-        db.session.execute(text("""
-        CREATE TRIGGER before_comment_update
-        BEFORE UPDATE ON Comment
-        FOR EACH ROW
-        BEGIN
-            INSERT INTO CommentHistory(email, route_id, crowdedness, safety, temperature, accessibility, action, action_time)
-            VALUES (OLD.email, OLD.route_id, OLD.crowdedness, OLD.safety, OLD.temperature, OLD.accessibility, 'update', NOW());
-        END;
-        """))
-        db.session.execute(text("DROP TRIGGER IF EXISTS before_comment_delete;"))
-        db.session.execute(text("""
-        CREATE TRIGGER before_comment_delete
-        BEFORE DELETE ON Comment
-        FOR EACH ROW
-        BEGIN
-            INSERT INTO CommentHistory(email, route_id, crowdedness, safety, temperature, accessibility, action, action_time)
-            VALUES (OLD.email, OLD.route_id, OLD.crowdedness, OLD.safety, OLD.temperature, OLD.accessibility, 'delete', NOW());
-        END;
-        """))
+    try:
+        with db.session.begin():
+            db.session.execute(text("DROP TRIGGER IF EXISTS before_comment_update;"))
+            db.session.execute(text("""
+            CREATE TRIGGER before_comment_update
+            BEFORE UPDATE ON Comment
+            FOR EACH ROW
+            BEGIN
+                INSERT INTO CommentHistory(email, route_id, crowdedness, safety, temperature, accessibility, action, action_time)
+                VALUES (OLD.email, OLD.route_id, OLD.crowdedness, OLD.safety, OLD.temperature, OLD.accessibility, 'update', NOW());
+            END;
+            """))
+            db.session.execute(text("DROP TRIGGER IF EXISTS before_comment_delete;"))
+            db.session.execute(text("""
+            CREATE TRIGGER before_comment_delete
+            BEFORE DELETE ON Comment
+            FOR EACH ROW
+            BEGIN
+                INSERT INTO CommentHistory(email, route_id, crowdedness, safety, temperature, accessibility, action, action_time)
+                VALUES (OLD.email, OLD.route_id, OLD.crowdedness, OLD.safety, OLD.temperature, OLD.accessibility, 'delete', NOW());
+            END;
+            """))
+    except Exception as e:
+        # Log the exception for debugging
+        print(f"Error creating triggers: {e}")
+
+
+with app.app_context():
+    db.create_all()  # Create tables
+    create_triggers()  # Create triggers
 
 # Call the setup_database function when you are ready to initialize your database
 # if __name__ == '__main__':
@@ -547,52 +564,114 @@ def get_user_comments():
         app.logger.error(f"Error in get_user_comments: {e}")
         return jsonify({'error': 'Database operation failed'}), 500
 
-# ... [rest of your imports and models]
 
 # Update comment function
 @app.route('/update_comment', methods=['POST'])
 def update_comment():
+    email = request.args.get('email')  # Retrieved from query parameters
     data = request.get_json()
-    # Validate input
-    if 'email' not in data or 'route_id' not in data:
-        return jsonify({'error': 'Missing email or route_id'}), 400
-    try:
-        # Perform update operation
-        comment = Comment.query.filter_by(email=data['email'], route_id=data['route_id']).first()
-        if comment:
-            comment.crowdedness = data.get('crowdedness', comment.crowdedness)
-            comment.safety = data.get('safety', comment.safety)
-            comment.temperature = data.get('temperature', comment.temperature)
-            comment.accessibility = data.get('accessibility', comment.accessibility)
-            db.session.commit()
-            return jsonify({'message': 'Comment updated successfully'}), 200
-        else:
-            return jsonify({'error': 'Comment not found'}), 404
-    except Exception as e:
-        app.logger.error(f"Error in update_comment: {e}")
-        return jsonify({'error': 'Database operation failed'}), 500
+    route_id = data['route_id']
+    new_comment = data['comment']
+    original_comment = data['originalComment']
+    category = data['category'].lower()
 
+    if category not in ['crowdedness', 'safety', 'temperature', 'accessibility']:
+        return jsonify({'error': 'Invalid category'}), 400
+
+    try:
+        with db.engine.connect() as connection:
+            connection.execution_options(isolation_level="READ COMMITTED")
+            trans = connection.begin()
+
+            existing_comment_query = text(f"""
+                SELECT {category}
+                FROM Comment
+                WHERE email = :email AND route_id = :route_id;
+            """)
+
+            existing_comment_result = connection.execute(existing_comment_query, {'email': email, 'route_id': route_id}).first()
+
+            if existing_comment_result and existing_comment_result[0]:
+                existing_comments = json.loads(existing_comment_result[0])
+                if original_comment in existing_comments:
+                    # Replace original comment with new comment
+                    index = existing_comments.index(original_comment)
+                    existing_comments[index] = new_comment
+                    updated_comments_json = json.dumps(existing_comments)
+
+                    update_comment_query = text(f"""
+                        UPDATE Comment 
+                        SET {category} = :updated_comments
+                        WHERE email = :email AND route_id = :route_id;
+                    """)
+                    connection.execute(update_comment_query, {'updated_comments': updated_comments_json, 'email': email, 'route_id': route_id})
+                else:
+                    return jsonify({'error': 'Original comment not found'}), 404
+            else:
+                return jsonify({'error': 'No existing comment to update'}), 404
+
+            trans.commit()
+            return jsonify({'message': 'Comment updated successfully'}), 200
+
+    except Exception as e:
+        trans.rollback()
+        app.logger.error(f"Error in update_comment: {e}")
+        return jsonify({'error': 'Database operation failed', 'detail': str(e)}), 500
+
+'''
 # Delete comment function
-@app.route('/delete_comment', methods=['DELETE'])
+@app.route('/delete_comment', methods=['POST'])
 def delete_comment():
     data = request.get_json()
-    # Validate input
-    if 'email' not in data or 'route_id' not in data:
-        return jsonify({'error': 'Missing email or route_id'}), 400
-    try:
-        # Perform delete operation
-        comment = Comment.query.filter_by(email=data['email'], route_id=data['route_id']).first()
-        if comment:
-            db.session.delete(comment)
-            db.session.commit()
-            return jsonify({'message': 'Comment deleted successfully'}), 200
-        else:
-            return jsonify({'error': 'Comment not found'}), 404
-    except Exception as e:
-        app.logger.error(f"Error in delete_comment: {e}")
-        return jsonify({'error': 'Database operation failed'}), 500
+    
+    if not data:
+        return jsonify({'error': 'Request body is empty or not JSON'}), 400
+    if 'email' not in data:
+        return jsonify({'error': 'Email is missing'}), 400
+    if 'route_id' not in data:
+        return jsonify({'error': 'Route ID is missing'}), 400
+    if 'category' not in data:
+        return jsonify({'error': 'Category is missing'}), 400
 
-# ... [rest of your application code]
+    email = data['email']
+    route_id = data['route_id']
+    category = data['category'].lower()
+    if category not in ['crowdedness', 'safety', 'temperature', 'accessibility']:
+        return jsonify({'error': 'Invalid category'}), 400
+
+       # Initialize delete_result outside of try-except block
+    delete_result = None
+
+    try:
+        with db.engine.connect() as connection:
+            delete_query = text(f"""
+                UPDATE Comment 
+                SET {category} = NULL
+                WHERE email = :email AND route_id = :route_id
+            """)
+            app.logger.info(f"Attempting to set category '{category}' to NULL for email '{email}' and route_id '{route_id}'")
+
+            delete_result = connection.execute(delete_query, {'email': email, 'route_id': route_id})
+            
+            # Move the conditional statements inside the try block
+            if delete_result.rowcount > 0:
+                return jsonify({'message': f'{category.title()} comment deleted successfully'}), 200
+            else:
+                #Check if the category is already NULL for the given email and route_id
+                check_query = text(f"""
+                    SELECT {category} FROM Comment 
+                    WHERE email = :email AND route_id = :route_id
+                """)
+                existing_category = connection.execute(check_query, {'email': email, 'route_id': route_id}).fetchone()
+                if existing_category and existing_category[0] is None:
+                    return jsonify({'message': f'No update necessary. {category.title()} comment is already empty'}), 200
+                else:
+                    return jsonify({'error': 'No comment found for the specified category'}), 404
+    except Exception as e:
+        detailed_error = str(e)
+        app.logger.error(f"Error in delete_comment: {detailed_error}")
+        return jsonify({'error': 'Database operation failed', 'detail': detailed_error}), 500
+'''
 
 
 
