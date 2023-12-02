@@ -203,6 +203,8 @@
                 <h2>Update Comment</h2>
                 <form id="updateForm">
                     Route ID: <input type="text" name="routeId" required><br>
+                    Original Comment:<br>
+                    <textarea name="originalComment" required></textarea><br>
                     Updated Comment:<br>
                     <textarea name="updatedComment" required></textarea><br>
                     Category:
@@ -821,15 +823,17 @@
                 // Retrieve values from the form
                 const routeId = document.querySelector('[name="routeId"]').value;
                 const category = document.querySelector('[name="category"]').value;
+                const originalComment = document.querySelector('[name="originalComment"]').value;
                 const updatedComment = document.querySelector('[name="updatedComment"]').value;
 
-                updateComment(currentUserEmail, routeId, category, updatedComment);
+                updateComment(currentUserEmail, routeId, category, originalComment, updatedComment);
             });
 
-            function updateComment(email, routeId, category, updatedComment) {
+            function updateComment(email, routeId, category, originalComment, updatedComment) {
                 const data = {
                     route_id: routeId,
                     category: category,
+                    originalComment: originalComment,
                     comment: updatedComment
                 };
 

@@ -553,24 +553,18 @@ def update_comment():
     email = request.args.get('email')  # Retrieved from query parameters
     data = request.get_json()
     route_id = data['route_id']
-
-    # Extract the new comment data from the request JSON
     new_comment = data['comment']
+    original_comment = data['originalComment']
     category = data['category'].lower()
 
-    # Check if the category is valid
     if category not in ['crowdedness', 'safety', 'temperature', 'accessibility']:
         return jsonify({'error': 'Invalid category'}), 400
-
-    # Prepare the updated comment data by wrapping it in a JSON array
-    updated_comment = json.dumps([new_comment])
 
     try:
         with db.engine.connect() as connection:
             connection.execution_options(isolation_level="READ COMMITTED")
             trans = connection.begin()
 
-            # Get the existing comment for the user and route
             existing_comment_query = text(f"""
                 SELECT {category}
                 FROM Comment
@@ -579,33 +573,33 @@ def update_comment():
 
             existing_comment_result = connection.execute(existing_comment_query, {'email': email, 'route_id': route_id}).first()
 
-            if existing_comment_result:
-                # Deserialize the existing JSON comment data
-                existing_comments = json.loads(existing_comment_result[0]) if existing_comment_result[0] else []
-                # Append the new comment
-                updated_comments = existing_comments + [new_comment]
-                # Serialize the updated comment data back to JSON
-                updated_comments_json = json.dumps(updated_comments)
+            if existing_comment_result and existing_comment_result[0]:
+                existing_comments = json.loads(existing_comment_result[0])
+                if original_comment in existing_comments:
+                    # Replace original comment with new comment
+                    index = existing_comments.index(original_comment)
+                    existing_comments[index] = new_comment
+                    updated_comments_json = json.dumps(existing_comments)
 
-                # Update the comment in the database
-                update_comment_query = text(f"""
-                    UPDATE Comment 
-                    SET {category} = :updated_comments
-                    WHERE email = :email AND route_id = :route_id;
-                """)
-                connection.execute(update_comment_query, {'updated_comments': updated_comments_json, 'email': email, 'route_id': route_id})
+                    update_comment_query = text(f"""
+                        UPDATE Comment 
+                        SET {category} = :updated_comments
+                        WHERE email = :email AND route_id = :route_id;
+                    """)
+                    connection.execute(update_comment_query, {'updated_comments': updated_comments_json, 'email': email, 'route_id': route_id})
+                else:
+                    return jsonify({'error': 'Original comment not found'}), 404
             else:
-                # If no existing comment is found, this is an error condition
                 return jsonify({'error': 'No existing comment to update'}), 404
 
             trans.commit()
             return jsonify({'message': 'Comment updated successfully'}), 200
 
     except Exception as e:
-        # Roll back the transaction on error
         trans.rollback()
         app.logger.error(f"Error in update_comment: {e}")
         return jsonify({'error': 'Database operation failed', 'detail': str(e)}), 500
+
 '''
 # Delete comment function
 @app.route('/delete_comment', methods=['POST'])
