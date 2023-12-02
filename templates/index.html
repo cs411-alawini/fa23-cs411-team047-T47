@@ -788,6 +788,8 @@
                         console.error('Error posting comment:', data.error);
                     } else {
                         alert('Comment posted successfully');
+                        console.log(routeId);
+                        console.log(data);
                         fetchComments(routeId); // Refresh comments
                         fetchRouteInfo(routeId); // Refresh route info
                     }
@@ -820,7 +822,7 @@
                 console.log('Fetching comments for user:', email);
                 clearComments(); // Clear comments before fetching new ones
 
-                fetch(`/get_user_comments?email=${email}`)
+                fetch(`/get_user_comments?email=${userEmail}`)
                     .then(response => response.json())
                     .then(commentsByRoute => {
                         Object.keys(commentsByRoute).forEach(route => {
@@ -874,9 +876,11 @@
 
             function fetchUserComments(email) {
                 console.log('Fetching comments for user:', email);
-                currentUserEmail = email; // Store the user's email
+
+                // email is already stored in the global variable userEmail
+                currentUserEmail = userEmail; // Store the user's email
                 clearComments(); // Your existing code...
-                fetch(`/get_user_comments?email=${email}`)
+                fetch(`/get_user_comments?email=${userEmail}`)
                     .then(response => response.json())
                     .then(commentsByRoute => {
                         Object.keys(commentsByRoute).forEach(route => {
@@ -932,9 +936,10 @@
 
             function fetchUserComments(email) {
                 console.log('Fetching comments for user:', email);
-                currentUserEmail1 = email; // Store the user's email
+
+                currentUserEmail1 = userEmail; // Store the user's email
                 clearComments(); // Your existing code...
-                fetch(`/get_user_comments?email=${email}`)
+                fetch(`/get_user_comments?email=${userEmail}`)
                     .then(response => response.json())
                     .then(commentsByRoute => {
                         Object.keys(commentsByRoute).forEach(route => {
