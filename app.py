@@ -106,57 +106,33 @@ class Comment(db.Model):
 GEOCODING_API_URL = 'https://maps.googleapis.com/maps/api/geocode/json'
 GEOCODING_API_KEY = 'AIzaSyBS-S37L58YssF52HQocELjBEI4s1-NSiM'
 
-class CommentHistory(db.Model):
-    __tablename__ = 'CommentHistory'
-
-    id = db.Column(db.Integer, primary_key=True)  # Primary key
-    email = db.Column(db.String(255))
-    route_id = db.Column(db.String(255))
-    crowdedness = db.Column(db.Text)
-    safety = db.Column(db.Text)
-    temperature = db.Column(db.Text)
-    accessibility = db.Column(db.Text)
-    action = db.Column(db.String(255))
-    action_time = db.Column(db.DateTime, default=db.func.current_timestamp())
-
-
+'''
 def create_triggers():
-    # Use the session object from db to perform raw SQL operations
     try:
-        with db.session.begin():
-            db.session.execute(text("DROP TRIGGER IF EXISTS before_comment_update;"))
-            db.session.execute(text("""
-            CREATE TRIGGER before_comment_update
-            BEFORE UPDATE ON Comment
-            FOR EACH ROW
-            BEGIN
-                INSERT INTO CommentHistory(email, route_id, crowdedness, safety, temperature, accessibility, action, action_time)
-                VALUES (OLD.email, OLD.route_id, OLD.crowdedness, OLD.safety, OLD.temperature, OLD.accessibility, 'update', NOW());
-            END;
-            """))
-            db.session.execute(text("DROP TRIGGER IF EXISTS before_comment_delete;"))
-            db.session.execute(text("""
-            CREATE TRIGGER before_comment_delete
-            BEFORE DELETE ON Comment
-            FOR EACH ROW
-            BEGIN
-                INSERT INTO CommentHistory(email, route_id, crowdedness, safety, temperature, accessibility, action, action_time)
-                VALUES (OLD.email, OLD.route_id, OLD.crowdedness, OLD.safety, OLD.temperature, OLD.accessibility, 'delete', NOW());
-            END;
-            """))
+        with db.engine.connect() as connection:
+            # Drop the existing trigger if it exists
+            connection.execute(text("DROP TRIGGER IF EXISTS after_comment_update;"))
+
+            # Define and execute the CREATE TRIGGER statement for the new BEFORE DELETE trigger
+            create_trigger_sql = text("""
+                CREATE TRIGGER after_comment_update
+                AFTER UPDATE ON Comment
+                FOR EACH ROW
+                BEGIN
+                    SET @crowd=(SELECT crowdedness
+                                FROM Comment)
+                    IF NEW.crowdedness = '[""]' AND NEW.safety = '[""]' AND 
+                       NEW.temperature = '[""]' AND NEW.accessibility = '[""]' THEN
+                        NEW.safety = '[""]';
+                    END IF;
+                END;
+            """)
+            connection.execute(create_trigger_sql)
+            print("Trigger created successfully")
     except Exception as e:
-        # Log the exception for debugging
-        print(f"Error creating triggers: {e}")
+        app.logger.error(f"Error creating triggers: {e}")
+'''
 
-
-with app.app_context():
-    db.create_all()  # Create tables
-    create_triggers()  # Create triggers
-
-# Call the setup_database function when you are ready to initialize your database
-# if __name__ == '__main__':
-    # setup_database()
-    # app.run(port=8000, debug=True)
 
 
 # get the lat and log for the closeby bus stops
@@ -625,15 +601,15 @@ def get_user_comments():
 @app.route('/update_comment', methods=['POST'])
 def update_comment():
     data = request.get_json()
-    print(data)
+    # print(data)
     email = data['email']
     route_id = data['route_id']
     new_comment = data['comment']
     original_comment = data['originalComment']
     category = data['category'].lower()
 
-    print('asdfsd')
-    print(email)
+    # print('asdfsd')
+    # print(email)
 
     if category not in ['crowdedness', 'safety', 'temperature', 'accessibility']:
         return jsonify({'error': 'Invalid category'}), 400
@@ -686,7 +662,7 @@ def delete_comment():
     data = request.get_json()
 
 
-    print(data)
+    # print(data)
     
     if not data:
         return jsonify({'error': 'Request body is empty or not JSON'}), 400
@@ -703,7 +679,7 @@ def delete_comment():
 
     category = category[:-1]
 
-    print(category)
+    # print(category)
 
     if category not in ['crowdedness', 'safety', 'temperature', 'accessibility']:
         return jsonify({'error': 'Invalid category'}), 400
@@ -723,11 +699,29 @@ def delete_comment():
             app.logger.info(f"Attempting to set category '{category}' to NULL for email '{email}' and route_id '{route_id}'")
 
             delete_result = connection.execute(delete_query, {'null_comment':null_comment, 'email': email, 'route_id': route_id})
+
+            # delete the row
+            check_query = text("""
+                SELECT * FROM Comment 
+                WHERE email = :email AND route_id = :route_id AND 
+                      crowdedness = :null_comment AND safety = :null_comment AND 
+                      temperature = :null_comment AND accessibility = :null_comment;
+            """)
+            
+            result = connection.execute(check_query, {'email': email, 'route_id': route_id, 'null_comment':null_comment, 'null_comment':null_comment, 'null_comment':null_comment, 'null_comment':null_comment}).fetchone()
+            # print("before trigger")
+            if result:
+                delete_row_query = text("""
+                    DELETE FROM Comment 
+                    WHERE email = :email AND route_id = :route_id;
+                """)
+                connection.execute(delete_row_query, {'email': email, 'route_id': route_id})
+                
             
             # commit the result
             connection.commit()
 
-            print(delete_result)
+            # print(delete_result)
             # Move the conditional statements inside the try block
             if delete_result.rowcount > 0:
                 connection.commit()
@@ -748,6 +742,7 @@ def delete_comment():
         detailed_error = str(e)
         app.logger.error(f"Error in delete_comment: {detailed_error}")
         return jsonify({'error': 'Database operation failed', 'detail': detailed_error}), 500
+        
 
 
 
@@ -798,4 +793,6 @@ def post_schedule():
 
 
 if __name__ == '__main__':
+    # with app.app_context():
+        # create_triggers()
     app.run(port=8000, debug=True)
