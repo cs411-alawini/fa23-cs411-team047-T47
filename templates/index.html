@@ -737,6 +737,14 @@
                 document.querySelectorAll('.commentsDisplay').forEach(div => {
                     div.innerHTML = ''; // Clear existing comments
                 });
+                // clear each sub div
+
+                // const commentsDisplay1 = document.querySelector(`crowdednessCommentsDisplay`);
+                // const commentsDisplay2 = document.querySelector(`safetyCommentsDisplay`);
+                // const commentsDisplay3 = document.querySelector(`temperatureCommentsDisplay`);
+                // const commentsDisplay4 = document.querySelector(`accessibilityCommentsDisplay`);
+
+
             }
 
             function fetchComments(routeId) {
@@ -836,6 +844,8 @@
                 fetch(`/get_user_comments?email=${userEmail}`)
                     .then(response => response.json())
                     .then(commentsByRoute => {
+                        console.log("commentsByRoute");
+                        console.log(commentsByRoute);
                         Object.keys(commentsByRoute).forEach(route => {
                             displayCommentsForRoute(route, commentsByRoute[route]);
                         });
@@ -846,9 +856,9 @@
             function displayCommentsForRoute(route, comments) {
                 Object.keys(comments).forEach(commentType => {
                     const commentsDisplay = document.querySelector(`#${commentType}CommentsDisplay`);
-                    
+                    // commentsDisplay.innerHTML = '';
                     if (commentsDisplay) {
-                        commentsDisplay.innerHTML = ''; // Clear previous comments
+                        // commentsDisplay.innerHTML = ''; // Clear previous comments
 
                         // The received array has a single stringified array element.
                         let commentArray = comments[commentType];
@@ -865,7 +875,7 @@
 
                         // console.log(commentArray);
 
-                        console.log(commentArray);
+                        // console.log(commentArray);
 
                         // Now that we have ensured commentArray is an array, iterate over it
                         commentArray.forEach(singleComment => {
@@ -894,6 +904,8 @@
                 fetch(`/get_user_comments?email=${userEmail}`)
                     .then(response => response.json())
                     .then(commentsByRoute => {
+                        console.log("commentsByRoute2");
+                        console.log(commentsByRoute);
                         Object.keys(commentsByRoute).forEach(route => {
                             displayCommentsForRoute(route, commentsByRoute[route]);
                         });
@@ -935,11 +947,27 @@
                 .then(response => response.json())
                 .then(data => {
                     console.log('Success:', data);
+                    // pop up msg for success
+                    alert("Comment updated successfully");
+
+                    // // empty out the update form
+                    // document.querySelector('[name="routeId"]').value = '';
+                    // document.querySelector('[name="category"]').value = '';
+                    document.querySelector('[name="originalComment"]').value = '';
+                    document.querySelector('[name="updatedComment"]').value = '';
+
                     // Handle success
+                    // upon sucess, reload the whole data
+                    fetchUserComments(userEmail);
+
                 })
                 .catch((error) => {
                     console.error('Error:', error);
                     // Handle error
+
+                    // pop up msg for error
+                    alert("Error updating comment");
+
                 });
             }
             
@@ -953,7 +981,25 @@
                 fetch(`/get_user_comments?email=${userEmail}`)
                     .then(response => response.json())
                     .then(commentsByRoute => {
+                        console.log("commentsByRoute3");
+                        // this is the one that is triggred upon clicking the comment button on nav bar
+                        console.log(commentsByRoute);
+
+                        
+                        const commentsDisplay1 = document.querySelector(`#crowdednessCommentsDisplay`);
+                        const commentsDisplay2 = document.querySelector(`#safetyCommentsDisplay`);
+                        const commentsDisplay3 = document.querySelector(`#temperatureCommentsDisplay`);
+                        const commentsDisplay4 = document.querySelector(`#accessibilityCommentsDisplay`);
+
+                        commentsDisplay1.innerHTML = '';
+                        commentsDisplay2.innerHTML = '';
+                        commentsDisplay3.innerHTML = '';
+                        commentsDisplay4.innerHTML = '';
+
+
                         Object.keys(commentsByRoute).forEach(route => {
+                            console.log("check");
+                            console.log(route);
                             displayCommentsForRoute(route, commentsByRoute[route]);
                         });
                     })
@@ -967,6 +1013,10 @@
                 const category1 = document.querySelector('[name="category1"]').value;
                 console.log(`Form submission with routeId: ${routeId1}, category: ${category1}`);
                 deleteComment(currentUserEmail1, routeId1, category1);
+
+                // load the comments again
+                fetchUserComments(userEmail);
+                
             });
 
             function deleteComment(email, routeId, category) {
@@ -992,10 +1042,21 @@
                 .then(data => {
                     console.log('Success:', data);
                     // Handle success
+
+                    // pop up msg for success
+                    alert("Comment deleted successfully");
+
+                    // // empty out the delete form
+                    document.querySelector('[name="routeId1"]').value = '';
+                    document.querySelector('[name="category1"]').value = '';
+
                 })
                 .catch((error) => {
                     console.error('Error:', error);
                     // Handle error
+
+                    // pop up msg for error
+                    alert("Error deleting comment");
                 });
             }
 
