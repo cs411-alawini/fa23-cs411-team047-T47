@@ -130,8 +130,10 @@ def create_triggers():
                 AFTER UPDATE ON Comment
                 FOR EACH ROW
                 BEGIN
-                    INSERT INTO commentHistory (email, route_id, crowdedness, safety, temperature, accessibility)
-                    VALUES (OLD.email, OLD.route_id, OLD.crowdedness, OLD.safety, OLD.temperature, OLD.accessibility);
+                    IF NEW.safety != OLD.safety OR NEW.accessibility != OLD.accessibility THEN 
+                        INSERT INTO commentHistory (email, route_id, crowdedness, safety, temperature, accessibility)
+                        VALUES (OLD.email, OLD.route_id, OLD.crowdedness, OLD.safety, OLD.temperature, OLD.accessibility);
+                    END IF;
                 END;
             """)
             connection.execute(create_trigger_sql)
