@@ -102,11 +102,22 @@ class Comment(db.Model):
     temperature = db.Column(db.Text, nullable=True)
     accessibility = db.Column(db.Text, nullable=True)
 
+class CommentHistory(db.Model):
+    __tablename__ = 'commentHistory'
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(100))
+    route_id = db.Column(db.String(100))
+    crowdedness = db.Column(db.Text)
+    safety = db.Column(db.Text)
+    temperature = db.Column(db.Text)
+    accessibility = db.Column(db.Text)
+
 # Geocoding API setup
 GEOCODING_API_URL = 'https://maps.googleapis.com/maps/api/geocode/json'
 GEOCODING_API_KEY = 'AIzaSyBS-S37L58YssF52HQocELjBEI4s1-NSiM'
 
-'''
+
 def create_triggers():
     try:
         with db.engine.connect() as connection:
@@ -119,19 +130,15 @@ def create_triggers():
                 AFTER UPDATE ON Comment
                 FOR EACH ROW
                 BEGIN
-                    SET @crowd=(SELECT crowdedness
-                                FROM Comment)
-                    IF NEW.crowdedness = '[""]' AND NEW.safety = '[""]' AND 
-                       NEW.temperature = '[""]' AND NEW.accessibility = '[""]' THEN
-                        NEW.safety = '[""]';
-                    END IF;
+                    INSERT INTO commentHistory (email, route_id, crowdedness, safety, temperature, accessibility)
+                    VALUES (OLD.email, OLD.route_id, OLD.crowdedness, OLD.safety, OLD.temperature, OLD.accessibility);
                 END;
             """)
             connection.execute(create_trigger_sql)
             print("Trigger created successfully")
     except Exception as e:
         app.logger.error(f"Error creating triggers: {e}")
-'''
+
 
 
 
@@ -793,6 +800,6 @@ def post_schedule():
 
 
 if __name__ == '__main__':
-    # with app.app_context():
-        # create_triggers()
+    with app.app_context():
+        create_triggers()
     app.run(port=8000, debug=True)
