@@ -1,6 +1,7 @@
 import mysql.connector
 import math
 from datetime import datetime
+from datetime import timedelta
 import numpy as np
 from sqlalchemy import text
 
@@ -103,8 +104,6 @@ def get_schedule(trip_id):
   result = mycursor.callproc('stopNum',[trip_id, 0])
   stop_num = result[1]
 
-  f_count = -1
-
   s_count = 0
 
   # To get the list of stop names in order
@@ -125,25 +124,41 @@ def get_schedule(trip_id):
 
   schedule = np.zeros([freq_num,stop_num])
   schedule = schedule.astype('str') 
+  day = timedelta(hours=24)
 
   for result in mycursor.stored_results():
     details = result.fetchall()
 
   for det in details:
-    if (det[1] == 1):
-      f_count += 1
-    schedule[f_count,det[1]-1] = str(det[0])
+    t =  timedelta(seconds=0)
+    if det[0] > day:
+      t = det[0] - day
+      schedule[det[3]][det[1]-1] = str(t)
+    else:
+      schedule[det[3]][det[1]-1] = str(det[0])
 
-  schedule_list = []
-  for freq in schedule:
-    schedule_list.append(dict(zip(stops,freq)))
+  schedule_list = {}
+  stop_list = {}
+
+  for i in range(len(schedule)):
+    l = schedule[i].tolist()
+    schedule_list[str(i)] = l
+
+  for i in range(len(stops)):
+    stop_list[str(i)] = stops[i]
 
   mycursor.close()
   db.close()
 
-  return schedule_list
+  result = [stop_list,schedule_list]
 
+  return result
 
 # get_close_by_routes(-23.439609, -46.807039)
-# get_schedule('1012-10-0')
+# get_schedule('5141-10-1')
+# day = timedelta(hours=24)
+# t = timedelta(days=1, seconds=360)
+# new_t = t - day
+# print(new_t)
+
 # print(get_schedule('1012-10-1')[0])

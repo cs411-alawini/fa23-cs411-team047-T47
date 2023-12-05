@@ -787,17 +787,14 @@ def get_route_and_trip_info():
 
 @app.route('/post_schedule', methods = ['POST'])
 def post_schedule():
-    data = request.get_json()
-    trip_id = data.get('trip_id')
-
-    # Serialize the dictionary to JSON without sorting keys
-    json_str = json.dumps(get_schedule(trip_id), sort_keys=False)
-    # print(json_str)
-    
-    # Use jsonify with the serialized JSON string
-    response = jsonify(json.loads(json_str)) 
-    
+    json_data = request.get_json()
+    trip_id = json_data.get('trip_id')
+    print(trip_id)
+    schedule_data = get_schedule(trip_id)
+    print(schedule_data[0])
+    response = jsonify([{'stops': schedule_data[0], 'schedule': schedule_data[1]}])
     return response
+
 
 
 

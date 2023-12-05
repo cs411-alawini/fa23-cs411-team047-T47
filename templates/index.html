@@ -508,10 +508,8 @@
                     else {
                         // closeByStops: 'stop_name', 'stop_lat', 'stop_lon'
                         closeByStops = data[0].stopInfo;
-                        console.log(closeByStops)
                         // closeByRoutes: 'id'
                         closeByRoutes = data[0].routeInfo;
-                        console.log(closeByRoutes);
                         clearMap();
                         setNewCenter(searchAddress.latitude, searchAddress.longitude);
                         map.setZoom(16);
@@ -1128,7 +1126,7 @@
 
 
             //Create a the schedule table with given data
-            function generateSchedule(schedule){
+            function generateSchedule(name, schedule){
                 // Check if there is an existing table and remove it
                 const tableBody = document.getElementById('schedule-body');
 
@@ -1138,25 +1136,23 @@
 
                 // Get the header row with all the stops
                 const headerRow = document.createElement('tr');
-                Object.keys(schedule[0]).forEach(stop => {
+                for (n in name){
                     const th = document.createElement('th');
-                    th.textContent = stop;
+                    th.textContent = name[n];
                     headerRow.appendChild(th);
-                });
                 tableBody.appendChild(headerRow);
+                }
 
                 // Loop through the JSON data and create table rows
-                schedule.forEach(item => {
+                for (freq in schedule){
                     const row = document.createElement('tr');
-
-                    // Create table cells for each property
-                    Object.keys(item).forEach(key => {
-                        const cell = document.createElement('td');
-                        cell.textContent = item[key];
-                        row.appendChild(cell);
-                    });
+                    for (var key in schedule[freq]) {
+                        const col = document.createElement('td');
+                        col.textContent = schedule[freq][key];
+                        row.appendChild(col);
+                    }
                     tableBody.appendChild(row);
-                });
+                };
 
                 document.getElementById('schedule-body').style.display = 'block';
             }
@@ -1201,9 +1197,10 @@
                         alert(data.error);
                     } 
                     else{
-                        console.log(data) // BUT here it is sorted??????
-                        console.log(Object.keys(data[0])[0]);
-                        generateSchedule(data);
+                        // console.log(data[0].schedule)
+                        // console.log(typeof data[0].schedule)
+                        console.log(data[0].stops)
+                        generateSchedule(data[0].stops, data[0].schedule);
 
                         // also populate the route info as well as the comments
 
