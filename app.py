@@ -346,21 +346,6 @@ def get_route_and_stops():
         JOIN Trips ON Arrival.trip_id = Trips.trip_id 
         WHERE Trips.shape_id = :shape_id
     """)
-    # routes_query = text("SELECT route_id FROM `Trips` WHERE shape_id = :shape_id")
-    # try:
-    #     with db.engine.connect() as connection:
-    #         route_shape = connection.execute(shape_query, {'shape_id': shape_id}).fetchall()
-    #         shape_points = [{'lat': point.shape_pt_lat, 'lng': point.shape_pt_lon} for point in route_shape]
-
-    #         bus_stops = connection.execute(stops_query, {'shape_id': shape_id}).fetchall()
-    #         route_id = connection.execute(routes_query, {'shape_id': shape_id}).fetchall()
-    #         print(route_id[0][0])
-    #         stops = [{'stop_name': stop.stop_name, 'stop_lat': stop.stop_lat, 'stop_lon': stop.stop_lon} for stop in bus_stops]
-            
-    #         return jsonify({'route_id': shape_id, 'shape': shape_points, 'stops': stops})
-    # except Exception as e:
-    #     app.logger.error(f"Error in get_route_and_stops: {e}")
-    #     return jsonify({'error': 'Database operation failed'}), 500
 
     routes_query = text("SELECT route_id FROM `Trips` WHERE shape_id = :shape_id")
     try:
@@ -437,96 +422,6 @@ def get_comments():
         app.logger.error(f"Error in get_comments: {e}")
         return jsonify({'error': 'Database operation failed'}), 500
 
-
-
-# @app.route('/post_comment', methods=['POST'])
-# def post_comment():
-#     data = request.get_json()
-
-#     # Check for required fields
-#     if 'email' not in data or 'route_id' not in data:
-#         return jsonify({'error': 'Missing email or route_id'}), 400
-
-#     email = data['email']
-#     route_id = data['route_id']
-#     new_crowdedness = data.get('crowdedness', '')
-#     new_safety = data.get('safety', '')
-#     new_temperature = data.get('temperature', '')
-#     new_accessibility = data.get('accessibility', '')
-
-#     try:
-#         with db.engine.connect() as connection:
-#             # Set the isolation level to 'READ COMMITTED'
-#             connection.execution_options(isolation_level="READ COMMITTED")
-
-#             # Begin a new transaction
-#             trans = connection.begin()
-
-
-#             # Advanced Query 1: LEFT JOIN, WHERE clause, and Aggregation
-#             existing_comment_query = text("""
-#                 SELECT c1.crowdedness, c1.safety, c1.temperature, c1.accessibility
-#                 FROM Comment c1
-                
-#                 WHERE c1.email = :email AND c1.route_id = :route_id
-                
-#             """)
-
-            
-#             existing_comment = connection.execute(existing_comment_query, {'email': email, 'route_id': route_id}).first()
-            
-#             print("check")
-#             print(existing_comment)
-
-#             if existing_comment:
-
-                
-#                 # Append new comments to existing ones
-#                 updated_crowdedness = json.dumps(json.loads(existing_comment.crowdedness) + [new_crowdedness])
-#                 updated_safety = json.dumps(json.loads(existing_comment.safety) + [new_safety])
-#                 updated_temperature = json.dumps(json.loads(existing_comment.temperature) + [new_temperature])
-#                 updated_accessibility = json.dumps(json.loads(existing_comment.accessibility) + [new_accessibility])
-
-#                 # Update the existing comment
-#                 update_comment_query = text("""
-#                     UPDATE Comment 
-#                     SET crowdedness = :crowdedness, safety = :safety, 
-#                         temperature = :temperature, accessibility = :accessibility
-#                     WHERE email = :email AND route_id = :route_id;
-#                 """)
-#                 connection.execute(update_comment_query, {
-#                     'email': email, 'route_id': route_id, 
-#                     'crowdedness': updated_crowdedness, 'safety': updated_safety, 
-#                     'temperature': updated_temperature, 'accessibility': updated_accessibility
-#                 })
-#             else:
-#                 # Advanced Query 2: Conditional Insert with Subquery and Set Operation (Intersection)
-#                 insert_comment_query = text("""
-#                     INSERT INTO Comment (email, route_id, crowdedness, safety, temperature, accessibility)
-#                     SELECT :email, :route_id, :crowdedness, :safety, :temperature, :accessibility
-#                     FROM (SELECT 1) AS dummy
-#                     WHERE EXISTS (
-#                         SELECT 1 FROM User WHERE email = :email
-#                         INTERSECT
-#                         SELECT 1 FROM Route WHERE route_id = :route_id
-#                     );
-#                 """)
-#                 connection.execute(insert_comment_query, {
-#                     'email': email, 'route_id': route_id, 
-#                     'crowdedness': json.dumps([new_crowdedness]), 
-#                     'safety': json.dumps([new_safety]), 
-#                     'temperature': json.dumps([new_temperature]), 
-#                     'accessibility': json.dumps([new_accessibility])
-#                 })
-
-#             # Commit the transaction
-#             trans.commit()
-#             return jsonify({'message': 'Comment added or updated successfully'}), 201
-
-#     except Exception as e:
-#         # Log the exception for debugging
-#         app.logger.error(f"Error in post_comment: {e}")
-#         return jsonify({'error': 'Database operation failed'}), 500
 
 
 @app.route('/post_comment', methods=['POST'])
