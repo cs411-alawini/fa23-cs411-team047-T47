@@ -1048,6 +1048,9 @@
                     document.querySelector('[name="routeId1"]').value = '';
                     document.querySelector('[name="category1"]').value = '';
 
+                    // load the comments again
+                    fetchUserComments(userEmail);
+
                 })
                 .catch((error) => {
                     console.error('Error:', error);
